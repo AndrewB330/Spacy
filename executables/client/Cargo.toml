@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 client = { path = "../../crates/client" }
 common = { path = "../../crates/common" }
+lru = "0.7.8"

@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.8.1", default-features = false, features = [] }
+bevy_rapier3d = "0.16.1"
 common = { path = "../common" }

@@ -40,33 +40,58 @@ impl Plugin for ServerConnectionPlugin {
     }
 }
 
-fn ping(connection: Option<ResMut<ServerConnection>>, mut timer: ResMut<PingTimer>, time: Res<Time>) {
+fn ping(
+    connection: Option<ResMut<ServerConnection>>,
+    mut timer: ResMut<PingTimer>,
+    time: Res<Time>,
+) {
     timer.0.tick(time.delta());
     if let Some(connection) = connection {
         if timer.0.just_finished() {
-            connection.sender.lock().unwrap().send(UserMessage::Ping).unwrap();
+            println!("Ping! {}", time.seconds_since_startup());
+            connection
+                .sender
+                .lock()
+                .unwrap()
+                .send(UserMessage::Ping)
+                .unwrap();
         }
     }
 }
 
-fn process_server_messages(connection: Option<ResMut<ServerConnection>>, mut event_writer: EventWriter<ServerMessage>) {
+fn process_server_messages(
+    connection: Option<ResMut<ServerConnection>>,
+    mut event_writer: EventWriter<ServerMessage>,
+) {
     if let Some(connection) = connection {
         loop {
             match connection.receiver.lock().unwrap().try_recv() {
                 Ok(message) => {
                     event_writer.send(message);
                 }
-                Err(TryRecvError::Empty) => { break; }
-                _ => { panic!("Unexpected end of channel!") }
+                Err(TryRecvError::Empty) => {
+                    break;
+                }
+                _ => {
+                    panic!("Unexpected end of channel!")
+                }
             }
         }
     }
 }
 
-fn process_user_messages(connection: Option<ResMut<ServerConnection>>, mut event_reader: EventReader<UserMessage>) {
+fn process_user_messages(
+    connection: Option<ResMut<ServerConnection>>,
+    mut event_reader: EventReader<UserMessage>,
+) {
     if let Some(connection) = connection {
         for message in event_reader.iter() {
-            connection.sender.lock().unwrap().send(message.clone()).unwrap();
+            connection
+                .sender
+                .lock()
+                .unwrap()
+                .send(message.clone())
+                .unwrap();
         }
     }
 }

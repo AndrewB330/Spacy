@@ -3,7 +3,7 @@ Spacy
 
 # TODO
 - [ ] Server-client
-  - [ ] Basic server-client setup
+  - [x] Basic server-client setup
   - [ ] Initial terrain synchronization
   - [ ] Player synchronization
   - [ ] Continuous terrain synchronization

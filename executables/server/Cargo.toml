@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 server = { path = "../../crates/server" }
 common = { path = "../../crates/common" }
+rand = "0.8.5"
+lru = "0.7.8"

@@ -61,14 +61,19 @@ fn pong(mut server_messages: ServerMessages, mut user_messages: UserMessages) {
     }
 }
 
-fn process_connection_events(connection_events: Option<ResMut<UserConnectionEvents>>, mut connections: ResMut<UserConnections>) {
+fn process_connection_events(
+    connection_events: Option<ResMut<UserConnectionEvents>>,
+    mut connections: ResMut<UserConnections>,
+) {
     if let Some(connection_events) = connection_events {
         let recv = connection_events.receiver.lock().unwrap().try_recv();
         match recv {
             Ok(event) => {
                 match event {
-                    UserConnectionEvent::Connected(connection) => connections.map.insert(connection.user_id, connection),
-                    UserConnectionEvent::Disconnected(id) => connections.map.remove(&id)
+                    UserConnectionEvent::Connected(connection) => {
+                        connections.map.insert(connection.user_id, connection)
+                    }
+                    UserConnectionEvent::Disconnected(id) => connections.map.remove(&id),
                 };
             }
             Err(TryRecvError::Disconnected) => {
@@ -79,24 +84,39 @@ fn process_connection_events(connection_events: Option<ResMut<UserConnectionEven
     }
 }
 
-fn process_user_messages(connections: ResMut<UserConnections>, mut event_writer: EventWriter<(UserId, UserMessage)>) {
+fn process_user_messages(
+    connections: ResMut<UserConnections>,
+    mut event_writer: EventWriter<(UserId, UserMessage)>,
+) {
     for connection in connections.map.values() {
         loop {
             match connection.from_user.lock().unwrap().try_recv() {
                 Ok(message) => {
                     event_writer.send((connection.user_id, message));
                 }
-                Err(TryRecvError::Empty) => { break; }
-                _ => { panic!("Unexpected end of channel!") }
+                Err(TryRecvError::Empty) => {
+                    break;
+                }
+                _ => {
+                    panic!("Unexpected end of channel!")
+                }
             }
         }
     }
 }
 
-fn process_server_messages(connections: ResMut<UserConnections>, mut event_reader: EventReader<(UserId, ServerMessage)>) {
+fn process_server_messages(
+    connections: ResMut<UserConnections>,
+    mut event_reader: EventReader<(UserId, ServerMessage)>,
+) {
     for (user_id, message) in event_reader.iter() {
         if let Some(connection) = connections.map.get(user_id) {
-            connection.to_user.lock().unwrap().send(message.clone()).unwrap();
+            connection
+                .to_user
+                .lock()
+                .unwrap()
+                .send(message.clone())
+                .unwrap();
         }
     }
 }

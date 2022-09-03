@@ -1,6 +1,11 @@
-use bincode::{config::{Configuration, standard}, Decode, Encode};
+use std::time::Duration;
 
-use crate::message::{ServerMessage, UserMessage};
+use bincode::{
+    config::{Configuration, standard},
+    Decode, Encode,
+};
+
+use crate::message::{ServerMessage, ServerMessageData, UserMessage, UserMessageData};
 use crate::player::PlayerAction;
 
 #[derive(Debug, Clone, Decode, Encode)]
@@ -18,28 +23,43 @@ pub enum UdpServerMessage {
 impl UdpUserMessage {
     pub fn retries_number(&self) -> u32 {
         match self {
-            UdpUserMessage::Message(_, message) => {
-                match message {
-                    UserMessage::Ping => 0,
-                    UserMessage::PlayerAction(PlayerAction::Jump | PlayerAction::UseTool | PlayerAction::UseToolSpecial) => 10,
-                    UserMessage::PlayerAction(PlayerAction::Move(_)) => 0,
-                }
-            }
+            UdpUserMessage::Message(_, message) => match message.data {
+                UserMessageData::Ping => 0,
+                UserMessageData::PlayerAction(
+                    PlayerAction::Jump | PlayerAction::UseTool | PlayerAction::UseToolSpecial,
+                ) => 10,
+                UserMessageData::PlayerAction(PlayerAction::Move(_)) => 0,
+            },
             UdpUserMessage::Ack(_) => 0,
         }
+    }
+
+    pub fn retry_timeout(&self) -> Duration {
+        Duration::from_millis(10)
+    }
+
+    pub fn need_ack(&self) -> bool {
+        self.retries_number() > 0
     }
 }
 
 impl UdpServerMessage {
     pub fn retries_number(&self) -> u32 {
         match self {
-            UdpServerMessage::Message(_, message) => {
-                match message {
-                    ServerMessage::Pong => 0,
-                }
-            }
+            UdpServerMessage::Message(_, message) => match message.data {
+                ServerMessageData::Pong => 0,
+                ServerMessageData::PlayerUpdate(_, _, _) => 0,
+            },
             UdpServerMessage::Ack(_) => 0,
         }
+    }
+
+    pub fn retry_timeout(&self) -> Duration {
+        Duration::from_millis(100)
+    }
+
+    pub fn need_ack(&self) -> bool {
+        self.retries_number() > 0
     }
 }
 
