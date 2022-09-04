@@ -61,7 +61,7 @@ pub fn setup_default_planet(mut commands: Commands) {
         spawn_user_player(
             &mut commands,
             PlayerId::new(),
-            UserId::new(),
+            None,
             Vec3::new(
                 random::<f32>() * 32.0 - 16.0,
                 random::<f32>() * 5.0 + 30.0,

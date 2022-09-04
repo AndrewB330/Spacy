@@ -31,7 +31,7 @@ pub fn spawn_players(
             spawn_user_player(
                 &mut commands,
                 PlayerId::new(),
-                *user_id,
+                Some(*user_id),
                 Vec3::Y * 30.0,
                 Quat::IDENTITY,
             );
@@ -50,6 +50,7 @@ pub fn broadcast_player_info(
                 player.player_id,
                 PlayerInfo {
                     is_me: Some(*user_id) == player.user_id,
+                    is_user: player.user_id.is_some(),
                 },
             )
             .into();
@@ -79,6 +80,9 @@ pub fn move_players(
     let dt = time.delta_seconds().min(0.03);
 
     for (player, handle, transform, levitation, mass, mut external_impulse) in players.iter_mut() {
+        if player.user_id.is_none() {
+            continue;
+        }
         if let Some(rigid_body) = context.bodies.get(handle.0) {
             let up = transform.rotation * Vec3::Y;
             let velocity = get_bevy_vec(rigid_body.linvel());

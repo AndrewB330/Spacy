@@ -13,4 +13,5 @@ pub enum PlayerAction {
 #[derive(Debug, Clone, Decode, Encode)]
 pub struct PlayerInfo {
     pub is_me: bool,
+    pub is_user: bool,
 }

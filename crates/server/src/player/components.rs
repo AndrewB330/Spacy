@@ -43,7 +43,7 @@ impl SyncTarget for Player {
 pub fn spawn_user_player(
     commands: &mut Commands,
     player_id: PlayerId,
-    user_id: UserId,
+    user_id: Option<UserId>,
     position: Vec3,
     rotation: Quat,
 ) {
@@ -53,7 +53,7 @@ pub fn spawn_user_player(
     commands.spawn_bundle(PlayerBundle {
         player: Player {
             player_id,
-            user_id: Some(user_id),
+            user_id: user_id,
             move_direction: Vec3::ZERO,
             jump_pressed: false,
             max_velocity: 3.5,

@@ -188,7 +188,7 @@ fn main_loop(socket: UdpSocket, connection_sender: Sender<UserConnectionEvent>) 
 pub fn start_udp_server(port: &str) -> Receiver<UserConnectionEvent> {
     let (connection_sender, connection_receiver) = channel();
 
-    let socket = UdpSocket::bind(format!("192.168.0.16:{}", port)).expect("Could not bind socket");
+    let socket = UdpSocket::bind(format!("127.0.0.1:{}", port)).expect("Could not bind socket");
 
     thread::spawn(move || {
         main_loop(socket, connection_sender);

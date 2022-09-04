@@ -68,12 +68,14 @@ pub fn spawn_default_with_transform<T: Component + DefaultTarget + SyncTarget>(
 }
 
 pub fn update_player_info(
-    mut query: Query<(&mut Player, &mut SyncHistory)>,
+    mut query: Query<(&mut Player, &Handle<StandardMaterial>, &mut SyncHistory)>,
     mut server_messages: ServerMessages,
+    // todo: remove
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for message in server_messages.iter() {
         if let ServerMessageData::PlayerInfo(player_id, player_info) = &message.data {
-            for (mut player, mut history) in query.iter_mut() {
+            for (mut player, handle, mut history) in query.iter_mut() {
                 let old_time = history
                     .message_time
                     .get(&SyncLabel::Info)
@@ -81,6 +83,13 @@ pub fn update_player_info(
                     .unwrap_or_default();
                 if player.player_id == *player_id && old_time < message.time {
                     player.is_me = player_info.is_me;
+                    player.is_user = player_info.is_user;
+                    if player.is_user {
+                        materials.get_mut(handle).unwrap().base_color = Color::RED;
+                    }
+                    if player.is_me {
+                        materials.get_mut(handle).unwrap().base_color = Color::GREEN;
+                    }
                     history
                         .message_time
                         .insert(SyncLabel::Transform, message.time);

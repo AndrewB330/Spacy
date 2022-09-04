@@ -98,7 +98,7 @@ fn process_user_messages(
                     break;
                 }
                 _ => {
-                    panic!("Unexpected end of channel!")
+                    // panic!("Unexpected end of channel!")
                 }
             }
         }

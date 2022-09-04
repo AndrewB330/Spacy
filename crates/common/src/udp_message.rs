@@ -72,7 +72,9 @@ const BINCODE_CONFIG: Configuration = standard();
 
 impl UdpUserMessage {
     pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
+        let mut v = bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap();
+        v.resize(64, 0);
+        v
     }
 
     pub fn from_bytes(bytes: &[u8]) -> UdpUserMessage {
@@ -82,7 +84,9 @@ impl UdpUserMessage {
 
 impl UdpServerMessage {
     pub fn to_bytes(&self) -> Vec<u8> {
-        bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap()
+        let mut v = bincode::encode_to_vec(self, BINCODE_CONFIG).unwrap();
+        v.resize(64, 0);
+        v
     }
 
     pub fn from_bytes(bytes: &[u8]) -> UdpServerMessage {

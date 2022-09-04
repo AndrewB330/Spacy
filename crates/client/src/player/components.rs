@@ -22,6 +22,7 @@ pub struct PlayerBundle {
 pub struct Player {
     pub player_id: PlayerId,
     pub is_me: bool,
+    pub is_user: bool,
 }
 
 impl SyncTarget for Player {
@@ -45,6 +46,7 @@ pub fn spawn_player(
             player: Player {
                 player_id,
                 is_me: false,
+                is_user: false,
             },
             mesh: meshes.add(
                 Capsule {
