@@ -1,3 +1,4 @@
+use log::info;
 use lru::LruCache;
 use rand::random;
 use std::collections::hash_map::Entry;
@@ -25,7 +26,7 @@ pub struct UdpConnection {
 fn connection_loop(connection: Arc<Mutex<UdpConnection>>, addr: SocketAddr, socket: UdpSocket) {
     connection.lock().unwrap().running = true;
 
-    println!("New connection: {:?}", socket);
+    info!("Connected: {:?}", addr);
 
     let mut message_id = 0;
 
@@ -49,7 +50,7 @@ fn connection_loop(connection: Arc<Mutex<UdpConnection>>, addr: SocketAddr, sock
 
                 message_id += 1;
             }
-            Err(TryRecvError::Empty) => {}
+            Err(TryRecvError::Empty) => thread::sleep(Duration::from_millis(1)),
             Err(TryRecvError::Disconnected) => {
                 panic!("Unexpected end of the channel!")
             }
@@ -187,7 +188,7 @@ fn main_loop(socket: UdpSocket, connection_sender: Sender<UserConnectionEvent>) 
 pub fn start_udp_server(port: &str) -> Receiver<UserConnectionEvent> {
     let (connection_sender, connection_receiver) = channel();
 
-    let socket = UdpSocket::bind(format!("0.0.0.0:{}", port)).expect("Could not bind socket");
+    let socket = UdpSocket::bind(format!("192.168.0.16:{}", port)).expect("Could not bind socket");
 
     thread::spawn(move || {
         main_loop(socket, connection_sender);

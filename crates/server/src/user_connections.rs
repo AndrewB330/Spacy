@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-use common::message::{ServerMessage, UserId, UserMessage};
+use common::message::{ServerMessage, ServerMessageData, UserId, UserMessage, UserMessageData};
 
 pub struct UserConnection {
     pub user_id: UserId,
@@ -52,9 +52,9 @@ impl Plugin for UserConnectionsPlugin {
 
 fn pong(mut server_messages: ServerMessages, mut user_messages: UserMessages) {
     for (user_id, message) in user_messages.iter() {
-        match message {
-            UserMessage::Ping => {
-                server_messages.send((*user_id, ServerMessage::Pong));
+        match message.data {
+            UserMessageData::Ping => {
+                server_messages.send((*user_id, ServerMessageData::Pong.into()));
             }
             _ => {}
         }

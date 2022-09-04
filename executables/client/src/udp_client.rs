@@ -11,22 +11,25 @@ use lru::LruCache;
 use common::message::{ServerMessage, UserMessage};
 use common::udp_message::{UdpServerMessage, UdpUserMessage};
 
-pub fn start_udp_client(server_port: &str) -> (Sender<UserMessage>, Receiver<ServerMessage>) {
+pub fn start_udp_client(
+    host: &str,
+    server_port: &str,
+) -> (Sender<UserMessage>, Receiver<ServerMessage>) {
     let (user_sender, user_receiver) = channel::<UserMessage>();
     let (server_sender, server_receiver) = channel::<ServerMessage>();
 
     let addrs = vec![
-        SocketAddr::from_str("127.0.0.1:8080").unwrap(),
-        SocketAddr::from_str("127.0.0.1:8081").unwrap(),
-        SocketAddr::from_str("127.0.0.1:8082").unwrap(),
-        SocketAddr::from_str("127.0.0.1:8083").unwrap(),
-        SocketAddr::from_str("127.0.0.1:8084").unwrap(),
+        SocketAddr::from_str("192.168.0.16:8080").unwrap(),
+        SocketAddr::from_str("192.168.0.16:8081").unwrap(),
+        SocketAddr::from_str("192.168.0.16:8082").unwrap(),
+        SocketAddr::from_str("192.168.0.16:8083").unwrap(),
+        SocketAddr::from_str("192.168.0.16:8084").unwrap(),
     ];
 
     let socket = UdpSocket::bind(addrs.as_slice()).expect("Could not bind client socket");
 
     socket
-        .connect(format!("127.0.0.1:{}", server_port))
+        .connect(format!("{}:{}", host, server_port))
         .expect("Could not connect to server");
 
     let socket_clone = socket.try_clone().unwrap();

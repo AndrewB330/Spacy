@@ -15,7 +15,7 @@ pub struct PlayerHeadBundle {
 
 #[derive(Component)]
 pub struct PlayerHead {
-    player_id: PlayerId,
+    pub player_id: PlayerId,
 }
 
 impl PlayerHeadBundle {

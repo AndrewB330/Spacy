@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bincode::{
-    config::{Configuration, standard},
+    config::{standard, Configuration},
     Decode, Encode,
 };
 
@@ -26,16 +26,20 @@ impl UdpUserMessage {
             UdpUserMessage::Message(_, message) => match message.data {
                 UserMessageData::Ping => 0,
                 UserMessageData::PlayerAction(
-                    PlayerAction::Jump | PlayerAction::UseTool | PlayerAction::UseToolSpecial,
+                    PlayerAction::JumpPressed
+                    | PlayerAction::JumpReleased
+                    | PlayerAction::UseTool
+                    | PlayerAction::UseToolSpecial,
                 ) => 10,
-                UserMessageData::PlayerAction(PlayerAction::Move(_)) => 0,
+                UserMessageData::PlayerAction(PlayerAction::Move(..)) => 0,
+                UserMessageData::PlayerAction(PlayerAction::RotateCamera(..)) => 0,
             },
             UdpUserMessage::Ack(_) => 0,
         }
     }
 
     pub fn retry_timeout(&self) -> Duration {
-        Duration::from_millis(10)
+        Duration::from_millis(50)
     }
 
     pub fn need_ack(&self) -> bool {
@@ -48,14 +52,15 @@ impl UdpServerMessage {
         match self {
             UdpServerMessage::Message(_, message) => match message.data {
                 ServerMessageData::Pong => 0,
-                ServerMessageData::PlayerUpdate(_, _, _) => 0,
+                ServerMessageData::Transform(..) => 0,
+                ServerMessageData::PlayerInfo(..) => 50,
             },
             UdpServerMessage::Ack(_) => 0,
         }
     }
 
     pub fn retry_timeout(&self) -> Duration {
-        Duration::from_millis(100)
+        Duration::from_millis(50)
     }
 
     pub fn need_ack(&self) -> bool {

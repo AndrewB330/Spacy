@@ -3,7 +3,7 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 
-use common::message::{ServerMessage, UserMessage};
+use common::message::{ServerMessage, UserMessage, UserMessageData};
 
 pub struct ServerConnectionPlugin;
 
@@ -48,12 +48,11 @@ fn ping(
     timer.0.tick(time.delta());
     if let Some(connection) = connection {
         if timer.0.just_finished() {
-            println!("Ping! {}", time.seconds_since_startup());
             connection
                 .sender
                 .lock()
                 .unwrap()
-                .send(UserMessage::Ping)
+                .send(UserMessageData::Ping.into())
                 .unwrap();
         }
     }

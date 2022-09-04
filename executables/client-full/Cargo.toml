@@ -1,13 +1,12 @@
 [package]
-name = "spacy-server"
+name = "client-full"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-server = { path = "../../crates/server" }
 common = { path = "../../crates/common" }
-rand = "0.8.5"
-lru = "0.7.8"
+client = { path = "../../crates/client" }
+server = { path = "../../crates/server" }
 log = "0.4.17"
