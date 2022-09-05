@@ -1,9 +1,9 @@
 use crate::stream_data;
 use bincode::{Decode, Encode};
 use log::info;
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::time::Duration;
 use tokio::net::TcpListener;
-use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use tokio::time::sleep;
 
 #[derive(Debug)]
@@ -28,19 +28,17 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                         Ok((stream, address)) => {
                             info!("Connected: {}", address);
 
-                            let (mut in_sender, in_receiver) = sync_channel(512);
-                            let (out_sender, mut out_receiver) = sync_channel(512);
+                            let (mut in_sender, in_receiver) = sync_channel(512 * 32);
+                            let (out_sender, mut out_receiver) = sync_channel(512 * 32);
 
                             let connection_id = counter;
                             counter += 1;
 
-                            match connection_sender
-                                .send(ConnectionEvent::Connected(
-                                    connection_id,
-                                    in_receiver,
-                                    out_sender,
-                                ))
-                            {
+                            match connection_sender.send(ConnectionEvent::Connected(
+                                connection_id,
+                                in_receiver,
+                                out_sender,
+                            )) {
                                 Ok(()) => {}
                                 Err(_) => {
                                     info!("Resilient TCP server stopped. Connection channel was closed, unrecoverable.");

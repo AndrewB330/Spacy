@@ -2,11 +2,11 @@
 
 use bincode::config::{standard, Configuration};
 use bincode::{Decode, Encode};
+use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::select;
-use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
-use std::time::Duration;
 use tokio::time::sleep;
 
 pub mod client;

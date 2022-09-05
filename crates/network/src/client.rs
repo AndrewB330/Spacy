@@ -1,9 +1,9 @@
 use crate::stream_data;
 use bincode::{Decode, Encode};
 use log::info;
+use std::sync::mpsc::{Receiver, SyncSender};
 use std::time::Duration;
 use tokio::net::TcpStream;
-use std::sync::mpsc::{Receiver, SyncSender};
 use tokio::time::sleep;
 
 #[tokio::main]
@@ -20,7 +20,13 @@ pub async fn resilient_tcp_client<In: Decode + Send + 'static, Out: Encode + Sen
         match TcpStream::connect(&format!("{}:{}", host, port)).await {
             Ok(stream) => {
                 info!("Resilient TCP client started");
-                if let Err((e, sender, receiver)) = stream_data(stream, sender_slot.take().unwrap(), receiver_slot.take().unwrap()).await {
+                if let Err((e, sender, receiver)) = stream_data(
+                    stream,
+                    sender_slot.take().unwrap(),
+                    receiver_slot.take().unwrap(),
+                )
+                .await
+                {
                     sender_slot = Some(sender);
                     receiver_slot = Some(receiver);
                     info!("Resilient TCP client stopped, error: {}", e);

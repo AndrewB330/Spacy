@@ -12,6 +12,6 @@ pub enum UserMessageData {
 #[derive(Debug, Clone, Decode, Encode)]
 pub enum ServerMessageData {
     Pong,
-    Transform(SyncTargetId, [f32; 3], [f32; 4]),
+    Transform(SyncTargetId, [f32; 3], [f32; 4], [f32; 3], [f32; 3]),
     PlayerInfo(PlayerId, PlayerInfo),
 }

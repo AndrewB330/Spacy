@@ -6,8 +6,8 @@ mod player;
 mod sync;
 
 use bevy::asset::AssetPlugin;
-use std::sync::Mutex;
 use std::sync::mpsc::Receiver;
+use std::sync::Mutex;
 
 use crate::physics::PhysicsPlugin;
 use crate::planet::PlanetPlugin;

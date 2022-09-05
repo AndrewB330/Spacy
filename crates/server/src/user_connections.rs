@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-use std::sync::mpsc::{TryRecvError, Receiver, SyncSender};
+use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
 
 use common::message::{ServerMessageData, UserMessageData};
 use common::user::UserId;
@@ -37,8 +37,8 @@ impl Plugin for UserConnectionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UserConnections>();
 
-        app.init_resource::<Events<(UserId, ServerMessageData)>>();
-        app.init_resource::<Events<(UserId, UserMessageData)>>();
+        app.add_event::<(UserId, ServerMessageData)>();
+        app.add_event::<(UserId, UserMessageData)>();
 
         // Process Connect and Disconnect server events.
         app.add_system_to_stage(CoreStage::First, process_connection_events);
@@ -105,7 +105,7 @@ fn process_user_messages(
                     break;
                 }
                 _ => {
-                    panic!("Unexpected end of channel!")
+                    // todo: panic!("Unexpected end of channel!")
                 }
             }
         }

@@ -1,5 +1,5 @@
-use std::sync::Mutex;
 use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
+use std::sync::Mutex;
 
 use bevy::prelude::*;
 
@@ -25,8 +25,8 @@ impl Default for PingTimer {
 
 impl Plugin for ServerConnectionPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Events<ServerMessageData>>();
-        app.init_resource::<Events<UserMessageData>>();
+        app.add_event::<ServerMessageData>();
+        app.add_event::<UserMessageData>();
         app.init_resource::<PingTimer>();
 
         // Receive all messages from server connections and fire events.
@@ -60,13 +60,13 @@ fn ping(
 
 fn process_server_messages(
     connection: Option<ResMut<ServerConnection>>,
-    mut event_writer: EventWriter<ServerMessageData>,
+    mut server_messages: EventWriter<ServerMessageData>,
 ) {
     if let Some(connection) = connection {
         loop {
             match connection.receiver.lock().unwrap().try_recv() {
                 Ok(message) => {
-                    event_writer.send(message);
+                    server_messages.send(message);
                 }
                 Err(TryRecvError::Empty) => {
                     break;
@@ -81,10 +81,10 @@ fn process_server_messages(
 
 fn process_user_messages(
     connection: Option<ResMut<ServerConnection>>,
-    mut event_reader: EventReader<UserMessageData>,
+    mut user_messages: EventReader<UserMessageData>,
 ) {
     if let Some(connection) = connection {
-        for message in event_reader.iter() {
+        for message in user_messages.iter() {
             connection
                 .sender
                 .lock()
