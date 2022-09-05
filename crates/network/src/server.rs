@@ -3,19 +3,19 @@ use bincode::{Decode, Encode};
 use log::info;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use tokio::time::sleep;
 
 #[derive(Debug)]
 pub enum ConnectionEvent<In, Out> {
-    Connected(u32, Receiver<In>, Sender<Out>),
+    Connected(u32, Receiver<In>, SyncSender<Out>),
     Disconnected(u32),
 }
 
 #[tokio::main]
 pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     port: &str,
-    connection_sender: Sender<ConnectionEvent<In, Out>>,
+    connection_sender: SyncSender<ConnectionEvent<In, Out>>,
 ) {
     let mut counter = 0;
 
@@ -28,8 +28,8 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                         Ok((stream, address)) => {
                             info!("Connected: {}", address);
 
-                            let (mut in_sender, in_receiver) = channel();
-                            let (out_sender, mut out_receiver) = channel();
+                            let (mut in_sender, in_receiver) = sync_channel(512);
+                            let (out_sender, mut out_receiver) = sync_channel(512);
 
                             let connection_id = counter;
                             counter += 1;

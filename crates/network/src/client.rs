@@ -3,14 +3,14 @@ use bincode::{Decode, Encode};
 use log::info;
 use std::time::Duration;
 use tokio::net::TcpStream;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, SyncSender};
 use tokio::time::sleep;
 
 #[tokio::main]
 pub async fn resilient_tcp_client<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     host: &str,
     port: &str,
-    mut sender: Sender<In>,
+    mut sender: SyncSender<In>,
     mut receiver: Receiver<Out>,
 ) {
     let mut sender_slot = Some(sender);

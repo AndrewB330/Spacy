@@ -5,7 +5,7 @@ use bincode::{Decode, Encode};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::select;
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -16,9 +16,9 @@ const BINCODE_CONFIG: Configuration = standard();
 
 async fn stream_data<In: Decode, Out: Encode>(
     mut stream: TcpStream,
-    mut sender: Sender<In>,
+    mut sender: SyncSender<In>,
     mut receiver: Receiver<Out>,
-) -> Result<!, (std::io::Error, Sender<In>, Receiver<Out>)> {
+) -> Result<!, (std::io::Error, SyncSender<In>, Receiver<Out>)> {
     let mut buffer = [0; 1 << 16];
 
     loop {

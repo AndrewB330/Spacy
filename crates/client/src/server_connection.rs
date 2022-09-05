@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
 
 use bevy::prelude::*;
 
@@ -8,7 +8,7 @@ use common::message::{ServerMessageData, UserMessageData};
 pub struct ServerConnectionPlugin;
 
 pub struct ServerConnection {
-    pub sender: Mutex<Sender<UserMessageData>>,
+    pub sender: Mutex<SyncSender<UserMessageData>>,
     pub receiver: Mutex<Receiver<ServerMessageData>>,
 }
 

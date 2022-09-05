@@ -1,14 +1,14 @@
-use std::sync::mpsc::channel;
+use std::sync::mpsc::sync_channel;
 use client::start_client_app;
 use server::start_server_app;
 use std::thread;
 use network::server::ConnectionEvent;
 
 fn main() {
-    let (user_sender, user_receiver) = channel();
-    let (server_sender, server_receiver) = channel();
+    let (user_sender, user_receiver) = sync_channel(512);
+    let (server_sender, server_receiver) = sync_channel(512);
 
-    let (connection_sender, connection_receiver) = channel();
+    let (connection_sender, connection_receiver) = sync_channel(512);
 
     let server_app_thread = thread::spawn(move || {
         start_server_app(connection_receiver);

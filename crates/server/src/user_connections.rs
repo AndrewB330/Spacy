@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-use std::sync::mpsc::{TryRecvError, Receiver, Sender};
+use std::sync::mpsc::{TryRecvError, Receiver, SyncSender};
 
 use common::message::{ServerMessageData, UserMessageData};
 use common::user::UserId;
@@ -11,7 +11,7 @@ use network::server::ConnectionEvent;
 pub struct UserConnection {
     pub user_id: UserId,
     pub from_user: Mutex<Receiver<UserMessageData>>,
-    pub to_user: Mutex<Sender<ServerMessageData>>,
+    pub to_user: Mutex<SyncSender<ServerMessageData>>,
 }
 
 #[derive(Default)]

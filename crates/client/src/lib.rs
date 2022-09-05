@@ -10,7 +10,7 @@ mod sync;
 #[cfg(debug_assertions)]
 use bevy::log::{Level, LogSettings};
 use std::sync::Mutex;
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, SyncSender};
 
 use bevy::prelude::*;
 use common::message::{ServerMessageData, UserMessageData};
@@ -25,7 +25,7 @@ use crate::sync::SynchronizationPlugin;
 
 mod server_connection;
 
-pub fn start_client_app(sender: Sender<UserMessageData>, receiver: Receiver<ServerMessageData>) {
+pub fn start_client_app(sender: SyncSender<UserMessageData>, receiver: Receiver<ServerMessageData>) {
     let mut app = App::new();
     #[cfg(debug_assertions)]
     app.insert_resource(LogSettings {
