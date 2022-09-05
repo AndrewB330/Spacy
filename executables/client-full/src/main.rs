@@ -1,11 +1,8 @@
-use client::start_client_app;
-use common::message::UserId;
-use log::info;
-use server::start_server_app;
-use server::user_connections::{UserConnection, UserConnectionEvent};
 use std::sync::mpsc::channel;
-use std::sync::Mutex;
+use client::start_client_app;
+use server::start_server_app;
 use std::thread;
+use network::server::ConnectionEvent;
 
 fn main() {
     let (user_sender, user_receiver) = channel();
@@ -13,20 +10,19 @@ fn main() {
 
     let (connection_sender, connection_receiver) = channel();
 
-    let t = thread::spawn(move || {
+    let server_app_thread = thread::spawn(move || {
         start_server_app(connection_receiver);
     });
 
     connection_sender
-        .send(UserConnectionEvent::Connected(UserConnection {
-            user_id: UserId::new(),
-            from_user: Mutex::new(user_receiver),
-            to_user: Mutex::new(server_sender),
-        }))
+        .blocking_send(ConnectionEvent::Connected(
+            0,
+            user_receiver,
+            server_sender,
+        ))
         .unwrap();
 
     start_client_app(user_sender, server_receiver);
 
-    info!("END!");
-    t.join().unwrap();
+    server_app_thread.join().unwrap();
 }

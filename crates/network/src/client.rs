@@ -3,8 +3,7 @@ use bincode::{Decode, Encode};
 use log::info;
 use std::time::Duration;
 use tokio::net::TcpStream;
-use tokio::sync::mpsc::{Receiver, Sender};
-use std::sync::mpsc::{channel as channel_s, Receiver as ReceiverS, Sender as SenderS};
+use std::sync::mpsc::{Receiver, Sender};
 use tokio::time::sleep;
 
 #[tokio::main]
@@ -14,11 +13,16 @@ pub async fn resilient_tcp_client<In: Decode + Send + 'static, Out: Encode + Sen
     mut sender: Sender<In>,
     mut receiver: Receiver<Out>,
 ) {
+    let mut sender_slot = Some(sender);
+    let mut receiver_slot = Some(receiver);
+
     loop {
         match TcpStream::connect(&format!("{}:{}", host, port)).await {
             Ok(stream) => {
                 info!("Resilient TCP client started");
-                if let Err(e) = stream_data(stream, &mut sender, &mut receiver).await {
+                if let Err((e, sender, receiver)) = stream_data(stream, sender_slot.take().unwrap(), receiver_slot.take().unwrap()).await {
+                    sender_slot = Some(sender);
+                    receiver_slot = Some(receiver);
                     info!("Resilient TCP client stopped, error: {}", e);
                 }
             }

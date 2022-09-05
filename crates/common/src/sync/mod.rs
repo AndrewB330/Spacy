@@ -8,12 +8,6 @@ pub enum SyncTargetId {
     Planet(PlanetId),
 }
 
-#[derive(Debug, Clone, Decode, Encode, PartialEq, Eq, Hash)]
-pub enum SyncLabel {
-    Transform,
-    Info,
-}
-
 pub trait SyncTarget {
     fn get_id(&self) -> SyncTargetId;
 }

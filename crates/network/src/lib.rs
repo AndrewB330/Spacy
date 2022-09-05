@@ -5,8 +5,9 @@ use bincode::{Decode, Encode};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::select;
-use tokio::sync::mpsc::{Receiver, Sender};
-use std::sync::mpsc::{channel as channel_s, Receiver as ReceiverS, Sender as SenderS};
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::time::Duration;
+use tokio::time::sleep;
 
 pub mod client;
 pub mod server;
@@ -15,30 +16,47 @@ const BINCODE_CONFIG: Configuration = standard();
 
 async fn stream_data<In: Decode, Out: Encode>(
     mut stream: TcpStream,
-    sender: &mut Sender<In>,
-    receiver: &mut Receiver<Out>,
-) -> Result<!, std::io::Error> {
+    mut sender: Sender<In>,
+    mut receiver: Receiver<Out>,
+) -> Result<!, (std::io::Error, Sender<In>, Receiver<Out>)> {
     let mut buffer = [0; 1 << 16];
 
     loop {
         select! {
-            out_message = receiver.recv() => {
-                match out_message {
-                    Some(out_message) => {
+            _ = sleep(Duration::from_millis(2)) => {
+                loop {
+                    let v = receiver.try_recv();
+                    match v {
+                        Ok(out_message) => {
                         let bytes = bincode::encode_to_vec(out_message, BINCODE_CONFIG).unwrap();
-                        stream.write_u32(bytes.len() as u32).await?;
-                        stream.write(&bytes).await?;
+                        if let Err(e) = stream.write_u32(bytes.len() as u32).await {
+                            return Err((e, sender, receiver));
+                        }
+                        if let Err(e) = stream.write(&bytes).await {
+                            return Err((e, sender, receiver));
+                        }
+                        }
+                    Err(TryRecvError::Empty) => {
+                        break;
                     }
-                    None => {
+                    Err(TryRecvError::Disconnected) => {
                         panic!("Unrecoverable error :( Streaming channel was closed");
+                    }
                     }
                 }
             }
+
             in_message_len = stream.read_u32() => {
-                let len = in_message_len? as usize;
-                stream.read_exact(&mut buffer[0..len]).await?;
+
+                let len = match in_message_len {
+                    Ok(v) => v as usize,
+                    Err(e) => return Err((e, sender, receiver)),
+                };
+                if let Err(e) = stream.read_exact(&mut buffer[0..len]).await {
+                            return Err((e, sender, receiver));
+                }
                 let message = bincode::decode_from_slice(&buffer, BINCODE_CONFIG).unwrap().0;
-                if let Err(_) = sender.send(message).await {
+                if let Err(_) = sender.send(message) {
                     panic!("Unrecoverable error :( Streaming channel was closed");
                 }
             }

@@ -9,4 +9,6 @@ edition = "2021"
 common = { path = "../../crates/common" }
 client = { path = "../../crates/client" }
 server = { path = "../../crates/server" }
+network = { path = "../../crates/network" }
+tokio = { version = "1.21.0", features = ["full"] }
 log = "0.4.17"

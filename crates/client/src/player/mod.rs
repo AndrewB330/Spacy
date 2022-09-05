@@ -8,5 +8,5 @@ pub use components::*;
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {}
+    fn build(&self, _: &mut App) {}
 }

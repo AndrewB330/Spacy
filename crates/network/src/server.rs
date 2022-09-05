@@ -3,12 +3,12 @@ use bincode::{Decode, Encode};
 use log::info;
 use std::time::Duration;
 use tokio::net::TcpListener;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::mpsc::{channel as channel_s, Receiver as ReceiverS, Sender as SenderS};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use tokio::time::sleep;
 
+#[derive(Debug)]
 pub enum ConnectionEvent<In, Out> {
-    Connected(u32, Receiver<In>, SenderS<Out>),
+    Connected(u32, Receiver<In>, Sender<Out>),
     Disconnected(u32),
 }
 
@@ -28,8 +28,8 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                         Ok((stream, address)) => {
                             info!("Connected: {}", address);
 
-                            let (mut in_sender, in_receiver) = channel::<In>(1024);
-                            let (out_sender, mut out_receiver) = channel_s::<Out>();
+                            let (mut in_sender, in_receiver) = channel();
+                            let (out_sender, mut out_receiver) = channel();
 
                             let connection_id = counter;
                             counter += 1;
@@ -40,7 +40,6 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                                     in_receiver,
                                     out_sender,
                                 ))
-                                .await
                             {
                                 Ok(()) => {}
                                 Err(_) => {
@@ -51,13 +50,12 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
 
                             let connection_sender_clone = connection_sender.clone();
                             tokio::spawn(async move {
-                                if let Err(e) =
-                                    stream_data(stream, &mut in_sender, &mut out_receiver).await
+                                if let Err((e, _, _)) =
+                                    stream_data(stream, in_sender, out_receiver).await
                                 {
                                     info!("Disconnected: {}, error: {}", address, e);
                                     match connection_sender_clone
                                         .send(ConnectionEvent::Disconnected(connection_id))
-                                        .await
                                     {
                                         Ok(()) => {}
                                         Err(_) => {

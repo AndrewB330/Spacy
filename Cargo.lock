@@ -871,7 +871,9 @@ dependencies = [
  "client",
  "common",
  "log",
+ "network",
  "server",
+ "tokio",
 ]
 
 [[package]]

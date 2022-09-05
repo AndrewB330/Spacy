@@ -1,8 +1,7 @@
 use crate::planet::{spawn_planet, Planet};
 use crate::player::{spawn_player, Player};
 use bevy::prelude::*;
-use bevy::utils::hashbrown::HashMap;
-use common::sync::{SyncLabel, SyncTargetId};
+use common::sync::{SyncTargetId};
 
 pub trait DefaultTarget {
     fn spawn_default_with_transform(

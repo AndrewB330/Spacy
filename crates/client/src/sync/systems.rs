@@ -3,7 +3,7 @@ use bevy::utils::HashMap;
 
 use crate::player::Player;
 use common::message::ServerMessageData;
-use common::sync::{SyncLabel, SyncTarget, SyncTargetId};
+use common::sync::{SyncTarget, SyncTargetId};
 
 use crate::sync::DefaultTarget;
 use crate::ServerMessages;
@@ -29,7 +29,7 @@ pub fn update_transform<T: Component + SyncTarget>(
 
 pub fn spawn_default_with_transform<T: Component + DefaultTarget + SyncTarget>(
     mut commands: Commands,
-    mut query: Query<&T>,
+    query: Query<&T>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut server_messages: ServerMessages,

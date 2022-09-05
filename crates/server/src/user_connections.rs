@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-use tokio::sync::mpsc::{error::TryRecvError, Receiver, Sender};
+use std::sync::mpsc::{TryRecvError, Receiver, Sender};
 
 use common::message::{ServerMessageData, UserMessageData};
 use common::user::UserId;
@@ -133,7 +133,10 @@ fn process_server_messages(
 
     for (user_id, message) in messages {
         if let Some(sender) = sender_copies.get(&user_id) {
-            sender.send(message.clone()).await.unwrap();
+            if let Err(_) = sender.send(message.clone()) {
+                // Error is ok here, in case if user just disconnected.
+                continue;
+            }
         }
     }
 }

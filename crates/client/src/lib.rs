@@ -7,9 +7,10 @@ mod planet;
 mod player;
 mod sync;
 
+#[cfg(debug_assertions)]
 use bevy::log::{Level, LogSettings};
 use std::sync::Mutex;
-use tokio::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender};
 
 use bevy::prelude::*;
 use common::message::{ServerMessageData, UserMessageData};

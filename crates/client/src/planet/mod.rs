@@ -8,7 +8,7 @@ pub use components::*;
 pub struct PlanetPlugin;
 
 impl Plugin for PlanetPlugin {
-    fn build(&self, app: &mut App) {
+    fn build(&self, _: &mut App) {
         todo!()
     }
 }

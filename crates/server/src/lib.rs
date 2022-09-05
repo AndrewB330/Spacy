@@ -7,7 +7,7 @@ mod sync;
 
 use bevy::asset::AssetPlugin;
 use std::sync::Mutex;
-use tokio::sync::mpsc::Receiver;
+use std::sync::mpsc::Receiver;
 
 use crate::physics::PhysicsPlugin;
 use crate::planet::PlanetPlugin;
