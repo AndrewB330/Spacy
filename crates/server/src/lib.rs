@@ -47,11 +47,13 @@ pub fn start_server_app(connection_events: Receiver<UserConnectionEvent>) {
         ..default()
     });
 
+    #[cfg(feature = "logging")]
     app.insert_resource(LogSettings {
         level: Level::INFO,
         ..default()
     });
 
+    #[cfg(feature = "logging")]
     app.add_plugin(LogPlugin);
 
     app.add_plugin(UserConnectionsPlugin);

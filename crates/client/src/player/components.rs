@@ -4,7 +4,6 @@ use common::player::{PlayerHeadBundle, PlayerId, PLAYER_CAPSULE_HEIGHT, PLAYER_C
 use common::sync::{SyncTarget, SyncTargetId};
 
 use crate::shape::Capsule;
-use crate::sync::SyncHistory;
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
@@ -13,7 +12,6 @@ pub struct PlayerBundle {
     pub material: Handle<StandardMaterial>,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
-    pub transform_sync: SyncHistory,
     pub visibility: Visibility,
     pub computed_visibility: ComputedVisibility,
 }
@@ -59,7 +57,6 @@ pub fn spawn_player(
             material: materials.add(Color::WHITE.into()),
             transform: Transform::from_translation(position).with_rotation(rotation),
             global_transform: Default::default(),
-            transform_sync: Default::default(),
             visibility: Default::default(),
             computed_visibility: Default::default(),
         })

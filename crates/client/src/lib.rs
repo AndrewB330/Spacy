@@ -12,19 +12,19 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
 
 use bevy::prelude::*;
+use common::message::{ServerMessageData, UserMessageData};
 
 use crate::camera::CameraPlugin;
 use crate::input::InputPlugin;
 use crate::light::LightPlugin;
 use crate::player::PlayerPlugin;
-use common::message::{ServerMessage, UserMessage};
 
 use crate::server_connection::{ServerConnection, ServerConnectionPlugin, ServerMessages};
 use crate::sync::SynchronizationPlugin;
 
 mod server_connection;
 
-pub fn start_client_app(sender: Sender<UserMessage>, receiver: Receiver<ServerMessage>) {
+pub fn start_client_app(sender: Sender<UserMessageData>, receiver: Receiver<ServerMessageData>) {
     let mut app = App::new();
     #[cfg(debug_assertions)]
     app.insert_resource(LogSettings {

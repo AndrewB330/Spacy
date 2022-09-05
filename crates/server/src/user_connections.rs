@@ -4,12 +4,13 @@ use std::sync::Mutex;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 
-use common::message::{ServerMessage, ServerMessageData, UserId, UserMessage, UserMessageData};
+use common::message::{ServerMessageData, UserMessageData};
+use common::user::UserId;
 
 pub struct UserConnection {
     pub user_id: UserId,
-    pub from_user: Mutex<Receiver<UserMessage>>,
-    pub to_user: Mutex<Sender<ServerMessage>>,
+    pub from_user: Mutex<Receiver<UserMessageData>>,
+    pub to_user: Mutex<Sender<ServerMessageData>>,
 }
 
 #[derive(Default)]
@@ -28,15 +29,15 @@ pub struct UserConnectionEvents {
 
 pub struct UserConnectionsPlugin;
 
-pub(crate) type UserMessages<'w, 's> = EventReader<'w, 's, (UserId, UserMessage)>;
-pub(crate) type ServerMessages<'w, 's> = EventWriter<'w, 's, (UserId, ServerMessage)>;
+pub(crate) type UserMessages<'w, 's> = EventReader<'w, 's, (UserId, UserMessageData)>;
+pub(crate) type ServerMessages<'w, 's> = EventWriter<'w, 's, (UserId, ServerMessageData)>;
 
 impl Plugin for UserConnectionsPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<UserConnections>();
 
-        app.init_resource::<Events<(UserId, ServerMessage)>>();
-        app.init_resource::<Events<(UserId, UserMessage)>>();
+        app.init_resource::<Events<(UserId, ServerMessageData)>>();
+        app.init_resource::<Events<(UserId, UserMessageData)>>();
 
         // Process Connect and Disconnect server events.
         app.add_system_to_stage(CoreStage::First, process_connection_events);
@@ -52,7 +53,7 @@ impl Plugin for UserConnectionsPlugin {
 
 fn pong(mut server_messages: ServerMessages, mut user_messages: UserMessages) {
     for (user_id, message) in user_messages.iter() {
-        match message.data {
+        match message {
             UserMessageData::Ping => {
                 server_messages.send((*user_id, ServerMessageData::Pong.into()));
             }
@@ -86,7 +87,7 @@ fn process_connection_events(
 
 fn process_user_messages(
     connections: ResMut<UserConnections>,
-    mut event_writer: EventWriter<(UserId, UserMessage)>,
+    mut event_writer: EventWriter<(UserId, UserMessageData)>,
 ) {
     for connection in connections.map.values() {
         loop {
@@ -107,7 +108,7 @@ fn process_user_messages(
 
 fn process_server_messages(
     connections: ResMut<UserConnections>,
-    mut event_reader: EventReader<(UserId, ServerMessage)>,
+    mut event_reader: EventReader<(UserId, ServerMessageData)>,
 ) {
     for (user_id, message) in event_reader.iter() {
         if let Some(connection) = connections.map.get(user_id) {

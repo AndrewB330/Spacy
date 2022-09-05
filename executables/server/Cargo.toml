@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-server = { path = "../../crates/server" }
+server = { path = "../../crates/server", features = ["logging"] }
 common = { path = "../../crates/common" }
+network = { path = "../../crates/network" }
 rand = "0.8.5"
 lru = "0.7.8"
 log = "0.4.17"

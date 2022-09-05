@@ -3,9 +3,7 @@ use crate::planet::PlanetTransform;
 use crate::player::spawn_user_player;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::{ExternalForce, ReadMassProperties};
-use common::message::{ServerMessage, ServerMessageData, UserId};
 use common::player::PlayerId;
-use common::sync::SyncTargetId;
 use rand::random;
 
 pub fn planet_gravity(

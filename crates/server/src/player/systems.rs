@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use common::message::{ServerMessage, ServerMessageData, UserMessageData};
+use common::message::{ServerMessageData, UserMessageData};
 use common::player::{PlayerAction, PlayerId, PlayerInfo};
 use common::sync::SyncLabel;
 
 use crate::physics::get_bevy_vec;
 use crate::physics::levitation::Levitation;
 use crate::player::components::{spawn_user_player, Player};
-use crate::sync::SyncHistory;
 use crate::user_connections::{ServerMessages, UserConnections, UserMessages};
 
 pub fn spawn_players(
@@ -40,25 +39,21 @@ pub fn spawn_players(
 }
 
 pub fn broadcast_player_info(
-    mut players: Query<(&mut Player, &mut SyncHistory)>,
+    mut players: Query<(&mut Player)>,
     connection: Res<UserConnections>,
     mut server_messages: ServerMessages,
 ) {
-    for (player, mut history) in players.iter_mut() {
+    for player in players.iter_mut() {
         for user_id in connection.map.keys() {
-            let message: ServerMessage = ServerMessageData::PlayerInfo(
+            let message = ServerMessageData::PlayerInfo(
                 player.player_id,
                 PlayerInfo {
                     is_me: Some(*user_id) == player.user_id,
                     is_user: player.user_id.is_some(),
                 },
-            )
-            .into();
+            );
 
-            let prev_time = history.get_time(*user_id, SyncLabel::Info);
-
-            if player.is_changed() || prev_time < message.time.before(5000) {
-                history.set_time(*user_id, SyncLabel::Info, message.time);
+            if player.is_changed() {
                 server_messages.send((*user_id, message.clone()));
             }
         }
@@ -116,7 +111,7 @@ pub fn move_players(
 
 pub fn process_player_actions(mut players: Query<&mut Player>, mut user_messages: UserMessages) {
     for (user_id, message) in user_messages.iter() {
-        if let UserMessageData::PlayerAction(action) = &message.data {
+        if let UserMessageData::PlayerAction(action) = &message {
             for mut player in players.iter_mut() {
                 if player.user_id != Some(*user_id) {
                     continue;

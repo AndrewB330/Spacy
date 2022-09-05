@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use common::message::UserId;
 
 use crate::physics::levitation::Levitation;
-use crate::sync::SyncHistory;
 use common::player::{PlayerId, PLAYER_ABOVE_GROUND, PLAYER_CAPSULE_HEIGHT, PLAYER_CAPSULE_RADIUS};
 use common::sync::{SyncTarget, SyncTargetId};
+use common::user::UserId;
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
@@ -18,7 +17,6 @@ pub struct PlayerBundle {
     pub external_impulse: ExternalImpulse,
     pub read_mass: ReadMassProperties,
     pub scale: ColliderScale,
-    pub sync_transform: SyncHistory,
     pub levitation: Levitation,
 }
 
@@ -78,7 +76,6 @@ pub fn spawn_user_player(
         external_impulse: ExternalImpulse::default(),
         read_mass: ReadMassProperties::default(),
         scale: ColliderScale::Absolute(Vec3::ONE),
-        sync_transform: SyncHistory::default(),
         levitation: Levitation::above_ground(above_ground),
     });
 }

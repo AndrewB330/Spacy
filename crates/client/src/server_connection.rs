@@ -3,19 +3,19 @@ use std::sync::Mutex;
 
 use bevy::prelude::*;
 
-use common::message::{ServerMessage, UserMessage, UserMessageData};
+use common::message::{ServerMessageData, UserMessageData};
 
 pub struct ServerConnectionPlugin;
 
 pub struct ServerConnection {
-    pub sender: Mutex<Sender<UserMessage>>,
-    pub receiver: Mutex<Receiver<ServerMessage>>,
+    pub sender: Mutex<Sender<UserMessageData>>,
+    pub receiver: Mutex<Receiver<ServerMessageData>>,
 }
 
 pub struct PingTimer(Timer);
 
-pub(crate) type UserMessages<'w, 's> = EventWriter<'w, 's, UserMessage>;
-pub(crate) type ServerMessages<'w, 's> = EventReader<'w, 's, ServerMessage>;
+pub(crate) type UserMessages<'w, 's> = EventWriter<'w, 's, UserMessageData>;
+pub(crate) type ServerMessages<'w, 's> = EventReader<'w, 's, ServerMessageData>;
 
 impl Default for PingTimer {
     fn default() -> Self {
@@ -25,8 +25,8 @@ impl Default for PingTimer {
 
 impl Plugin for ServerConnectionPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<Events<ServerMessage>>();
-        app.init_resource::<Events<UserMessage>>();
+        app.init_resource::<Events<ServerMessageData>>();
+        app.init_resource::<Events<UserMessageData>>();
         app.init_resource::<PingTimer>();
 
         // Receive all messages from server connections and fire events.
@@ -60,7 +60,7 @@ fn ping(
 
 fn process_server_messages(
     connection: Option<ResMut<ServerConnection>>,
-    mut event_writer: EventWriter<ServerMessage>,
+    mut event_writer: EventWriter<ServerMessageData>,
 ) {
     if let Some(connection) = connection {
         loop {
@@ -81,7 +81,7 @@ fn process_server_messages(
 
 fn process_user_messages(
     connection: Option<ResMut<ServerConnection>>,
-    mut event_reader: EventReader<UserMessage>,
+    mut event_reader: EventReader<UserMessageData>,
 ) {
     if let Some(connection) = connection {
         for message in event_reader.iter() {

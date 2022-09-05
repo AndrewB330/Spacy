@@ -1,8 +1,6 @@
-use crate::udp_server::start_udp_server;
-use server::start_server_app;
 use crate::tcp_server::start_tcp_server;
+use server::start_server_app;
 
-mod udp_server;
 mod tcp_server;
 
 fn main() {

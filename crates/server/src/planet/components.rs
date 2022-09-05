@@ -1,4 +1,4 @@
-use crate::sync::{SyncHistory, TransformWrapper};
+use crate::sync::TransformWrapper;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use common::planet::PlanetId;
@@ -12,7 +12,6 @@ pub struct PlanetBundle {
     pub transform: Transform,
     pub planet_transform: PlanetTransform,
     pub global_transform: GlobalTransform,
-    pub sync_transform: SyncHistory,
 }
 
 #[derive(Component)]
@@ -60,7 +59,6 @@ pub fn spawn_planet(commands: &mut Commands, radius: f32, mass: f32) -> Entity {
             transform: Transform::default(),
             planet_transform: PlanetTransform::default(),
             global_transform: GlobalTransform::default(),
-            sync_transform: SyncHistory::default(),
         })
         .id()
 }

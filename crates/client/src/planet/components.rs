@@ -4,7 +4,6 @@ use common::planet::PlanetId;
 use common::sync::{SyncTarget, SyncTargetId};
 
 use crate::shape::UVSphere;
-use crate::sync::SyncHistory;
 
 #[derive(Bundle)]
 pub struct PlanetBundle {
@@ -13,7 +12,6 @@ pub struct PlanetBundle {
     pub material: Handle<StandardMaterial>,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
-    pub transform_sync: SyncHistory,
     pub visibility: Visibility,
     pub computed_visibility: ComputedVisibility,
 }
@@ -54,7 +52,6 @@ pub fn spawn_planet(
             material: materials.add(Color::DARK_GRAY.into()),
             transform: Transform::from_translation(position).with_rotation(rotation),
             global_transform: Default::default(),
-            transform_sync: Default::default(),
             visibility: Default::default(),
             computed_visibility: Default::default(),
         })
