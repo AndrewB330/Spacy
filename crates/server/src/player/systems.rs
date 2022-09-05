@@ -3,7 +3,6 @@ use bevy_rapier3d::prelude::*;
 
 use common::message::{ServerMessageData, UserMessageData};
 use common::player::{PlayerAction, PlayerId, PlayerInfo};
-use common::sync::SyncLabel;
 
 use crate::physics::get_bevy_vec;
 use crate::physics::levitation::Levitation;
@@ -15,11 +14,11 @@ pub fn spawn_players(
     connections: Res<UserConnections>,
     players: Query<&Player>,
 ) {
-    for user_id in connections.map.keys() {
+    for connection in connections.map.values() {
         let mut already_exists = false;
         for player in players.iter() {
             if let Some(user_id_cur) = player.user_id {
-                if *user_id == user_id_cur {
+                if connection.user_id == user_id_cur {
                     already_exists = true;
                     break;
                 }
@@ -30,7 +29,7 @@ pub fn spawn_players(
             spawn_user_player(
                 &mut commands,
                 PlayerId::new(),
-                Some(*user_id),
+                Some(connection.user_id),
                 Vec3::Y * 30.0,
                 Quat::IDENTITY,
             );
@@ -39,22 +38,22 @@ pub fn spawn_players(
 }
 
 pub fn broadcast_player_info(
-    mut players: Query<(&mut Player)>,
+    mut players: Query<&mut Player>,
     connection: Res<UserConnections>,
     mut server_messages: ServerMessages,
 ) {
     for player in players.iter_mut() {
-        for user_id in connection.map.keys() {
+        for connection in connection.map.values() {
             let message = ServerMessageData::PlayerInfo(
                 player.player_id,
                 PlayerInfo {
-                    is_me: Some(*user_id) == player.user_id,
+                    is_me: Some(connection.user_id) == player.user_id,
                     is_user: player.user_id.is_some(),
                 },
             );
 
             if player.is_changed() {
-                server_messages.send((*user_id, message.clone()));
+                server_messages.send((connection.user_id, message.clone()));
             }
         }
     }
@@ -82,7 +81,7 @@ pub fn move_players(
             let up = transform.rotation * Vec3::Y;
             let velocity = get_bevy_vec(rigid_body.linvel());
             let velocity_horizontal = velocity - up.dot(velocity) * up;
-            let mut velocity_target = transform.rotation
+            let velocity_target = transform.rotation
                 * Quat::from_axis_angle(Vec3::Y, player.head_yaw)
                 * player.move_direction
                 * player.max_velocity;

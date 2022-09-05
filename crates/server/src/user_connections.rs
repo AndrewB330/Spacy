@@ -1,11 +1,12 @@
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::sync::Mutex;
 
 use bevy::prelude::*;
 use bevy::utils::HashMap;
+use tokio::sync::mpsc::{error::TryRecvError, Receiver, Sender};
 
 use common::message::{ServerMessageData, UserMessageData};
 use common::user::UserId;
+use network::server::ConnectionEvent;
 
 pub struct UserConnection {
     pub user_id: UserId,
@@ -15,7 +16,7 @@ pub struct UserConnection {
 
 #[derive(Default)]
 pub struct UserConnections {
-    pub map: HashMap<UserId, UserConnection>,
+    pub map: HashMap<u32, UserConnection>,
 }
 
 pub enum UserConnectionEvent {
@@ -24,7 +25,7 @@ pub enum UserConnectionEvent {
 }
 
 pub struct UserConnectionEvents {
-    pub receiver: Mutex<Receiver<UserConnectionEvent>>,
+    pub receiver: Mutex<Receiver<ConnectionEvent<UserMessageData, ServerMessageData>>>,
 }
 
 pub struct UserConnectionsPlugin;
@@ -71,10 +72,15 @@ fn process_connection_events(
         match recv {
             Ok(event) => {
                 match event {
-                    UserConnectionEvent::Connected(connection) => {
-                        connections.map.insert(connection.user_id, connection)
-                    }
-                    UserConnectionEvent::Disconnected(id) => connections.map.remove(&id),
+                    ConnectionEvent::Connected(id, receiver, sender) => connections.map.insert(
+                        id,
+                        UserConnection {
+                            user_id: UserId::new(),
+                            from_user: Mutex::new(receiver),
+                            to_user: Mutex::new(sender),
+                        },
+                    ),
+                    ConnectionEvent::Disconnected(id) => connections.map.remove(&id),
                 };
             }
             Err(TryRecvError::Disconnected) => {
@@ -99,7 +105,7 @@ fn process_user_messages(
                     break;
                 }
                 _ => {
-                    // panic!("Unexpected end of channel!")
+                    panic!("Unexpected end of channel!")
                 }
             }
         }
@@ -110,14 +116,24 @@ fn process_server_messages(
     connections: ResMut<UserConnections>,
     mut event_reader: EventReader<(UserId, ServerMessageData)>,
 ) {
+    let mut mapping = HashMap::default();
+    for (k, v) in connections.map.iter() {
+        mapping.insert(v.user_id, *k);
+    }
+
+    let mut sender_copies = HashMap::new();
+    let mut messages = vec![];
+
     for (user_id, message) in event_reader.iter() {
-        if let Some(connection) = connections.map.get(user_id) {
-            connection
-                .to_user
-                .lock()
-                .unwrap()
-                .send(message.clone())
-                .unwrap();
+        if let Some(connection) = mapping.get(user_id).and_then(|id| connections.map.get(id)) {
+            sender_copies.insert(*user_id, connection.to_user.lock().unwrap().clone());
+        }
+        messages.push((*user_id, message.clone()));
+    }
+
+    for (user_id, message) in messages {
+        if let Some(sender) = sender_copies.get(&user_id) {
+            sender.send(message.clone()).await.unwrap();
         }
     }
 }

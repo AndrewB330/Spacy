@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use bevy::utils::{Entry, HashMap};
 
 use common::message::ServerMessageData;
-use common::sync::{SyncLabel, SyncTarget};
+use common::sync::SyncTarget;
 
 use crate::sync::components::TransformWrapper;
 use crate::user_connections::{ServerMessages, UserConnections};
@@ -21,9 +20,9 @@ pub fn broadcast_transform<T: Component + SyncTarget, TW: Component + TransformW
             transform.get_rotation().to_array(),
         );
 
-        for user_id in connection.map.keys() {
+        for connection in connection.map.values() {
             if transform.is_changed() {
-                server_messages.send((*user_id, message.clone()));
+                server_messages.send((connection.user_id, message.clone()));
             }
         }
     }

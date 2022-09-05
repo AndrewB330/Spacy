@@ -1,7 +1,8 @@
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::sync::Mutex;
+use tokio::sync::mpsc::{Receiver, Sender};
 
 use bevy::prelude::*;
+use tokio::sync::mpsc::error::TryRecvError;
 
 use common::message::{ServerMessageData, UserMessageData};
 
@@ -52,7 +53,7 @@ fn ping(
                 .sender
                 .lock()
                 .unwrap()
-                .send(UserMessageData::Ping.into())
+                .blocking_send(UserMessageData::Ping.into())
                 .unwrap();
         }
     }
@@ -89,7 +90,7 @@ fn process_user_messages(
                 .sender
                 .lock()
                 .unwrap()
-                .send(message.clone())
+                .blocking_send(message.clone())
                 .unwrap();
         }
     }

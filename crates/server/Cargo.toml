@@ -9,7 +9,9 @@ edition = "2021"
 bevy = { version = "0.8.1", default-features = false, features = [] }
 bevy_rapier3d = "0.16.2"
 common = { path = "../common" }
+network = { path = "../network" }
 rand = "0.8.5"
+tokio = { version = "1.21.0", features = ["full"] }
 
 [features]
 logging = []

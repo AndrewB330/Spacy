@@ -1,18 +1,33 @@
-use tokio::net::TcpStream;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
 use crate::stream_data;
+use bincode::{Decode, Encode};
+use log::info;
+use std::time::Duration;
+use tokio::net::TcpStream;
+use tokio::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{channel as channel_s, Receiver as ReceiverS, Sender as SenderS};
+use tokio::time::sleep;
 
-pub async fn start_tcp_client<In: From<Vec<u8>>, Out: Into<Vec<u8>>>(
+#[tokio::main]
+pub async fn resilient_tcp_client<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     host: &str,
     port: &str,
-) -> (Sender<Out>, Receiver<In>) {
-    let (client_sender, client_receiver) = channel::<Out>(1024);
-    let (server_sender, server_receiver) = channel::<In>(1024);
+    mut sender: Sender<In>,
+    mut receiver: Receiver<Out>,
+) {
+    loop {
+        match TcpStream::connect(&format!("{}:{}", host, port)).await {
+            Ok(stream) => {
+                info!("Resilient TCP client started");
+                if let Err(e) = stream_data(stream, &mut sender, &mut receiver).await {
+                    info!("Resilient TCP client stopped, error: {}", e);
+                }
+            }
+            Err(e) => {
+                info!("Resilient TCP client failed to start, error: {}", e);
+            }
+        };
 
-    let stream = TcpStream::connect(format!("{}:{}", host, port)).await.unwrap();
-
-    // todo: run in another thread??
-    stream_data(stream, server_sender, client_receiver);
-
-    (client_sender, server_receiver)
+        info!("Restarting after 5 second...");
+        sleep(Duration::from_secs(5)).await;
+    }
 }

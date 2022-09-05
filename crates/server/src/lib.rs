@@ -6,8 +6,8 @@ mod player;
 mod sync;
 
 use bevy::asset::AssetPlugin;
-use std::sync::mpsc::Receiver;
 use std::sync::Mutex;
+use tokio::sync::mpsc::Receiver;
 
 use crate::physics::PhysicsPlugin;
 use crate::planet::PlanetPlugin;
@@ -19,12 +19,16 @@ use bevy::log::{Level, LogPlugin, LogSettings};
 use bevy::prelude::*;
 use bevy::time::TimePlugin;
 use bevy_rapier3d::prelude::*;
+use common::message::{ServerMessageData, UserMessageData};
+use network::server::ConnectionEvent;
 
-use crate::user_connections::{UserConnectionEvent, UserConnectionEvents, UserConnectionsPlugin};
+use crate::user_connections::{UserConnectionEvents, UserConnectionsPlugin};
 
 pub mod user_connections;
 
-pub fn start_server_app(connection_events: Receiver<UserConnectionEvent>) {
+pub fn start_server_app(
+    connection_events: Receiver<ConnectionEvent<UserMessageData, ServerMessageData>>,
+) {
     let mut app = App::new();
     app.add_plugin(CorePlugin);
     app.add_plugin(TimePlugin);

@@ -17,7 +17,7 @@ pub fn planet_gravity(
 ) {
     for (mass, transform, mut external_force, parent) in objects.iter_mut() {
         let global_transform = if let Some(parent) = parent {
-            if let Ok((my_planet, my_planet_transform)) = planets.get(parent.get()) {
+            if let Ok((_, my_planet_transform)) = planets.get(parent.get()) {
                 Transform::default()
                     .with_translation(my_planet_transform.translation)
                     .with_rotation(my_planet_transform.rotation)

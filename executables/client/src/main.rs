@@ -1,9 +1,18 @@
-use crate::tcp_client::start_tcp_client;
 use client::start_client_app;
+use network::client::resilient_tcp_client;
+use std::thread;
+use tokio::sync::mpsc::channel;
 
-mod tcp_client;
+#[tokio::main]
+async fn main() {
+    let (server_sender, server_receiver) = channel(1024);
+    let (user_sender, user_receiver) = channel(1024);
 
-fn main() {
-    let (sender, receiver) = start_tcp_client("34.118.6.39", "8000");
-    start_client_app(sender, receiver);
+    let tcp_client_thread = thread::spawn(|| {
+        resilient_tcp_client("127.0.0.1", "8000", server_sender, user_receiver);
+    });
+
+    start_client_app(user_sender, server_receiver);
+
+    tcp_client_thread.join().unwrap();
 }

@@ -861,6 +861,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "common",
+ "tokio",
 ]
 
 [[package]]
@@ -1823,6 +1824,7 @@ name = "network"
 version = "0.1.0"
 dependencies = [
  "bincode",
+ "log",
  "tokio",
 ]
 
@@ -2302,7 +2304,9 @@ dependencies = [
  "bevy",
  "bevy_rapier3d",
  "common",
+ "network",
  "rand",
+ "tokio",
 ]
 
 [[package]]
@@ -2381,6 +2385,7 @@ dependencies = [
  "common",
  "lru",
  "network",
+ "tokio",
 ]
 
 [[package]]
@@ -2393,6 +2398,7 @@ dependencies = [
  "network",
  "rand",
  "server",
+ "tokio",
 ]
 
 [[package]]
