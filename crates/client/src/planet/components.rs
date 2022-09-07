@@ -1,62 +1,37 @@
+use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
-
-use common::planet::PlanetId;
-use common::sync::{SyncTarget, SyncTargetId};
+use common::message::planet::SpawnPlanet;
 
 use crate::shape::UVSphere;
 use crate::sync::SyncTransform;
+use common::planet::{spawn_planet, Planet, PlanetBundle, PlanetId};
 
-#[derive(Bundle)]
-pub struct PlanetBundle {
-    pub player: Planet,
-    pub mesh: Handle<Mesh>,
-    pub material: Handle<StandardMaterial>,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-    pub transform_velocity: SyncTransform,
-    pub visibility: Visibility,
-    pub computed_visibility: ComputedVisibility,
-}
-
-#[derive(Component)]
-pub struct Planet {
-    pub planet_id: PlanetId,
-}
-
-impl SyncTarget for Planet {
-    fn get_id(&self) -> SyncTargetId {
-        SyncTargetId::Planet(self.planet_id)
-    }
-}
-
-pub fn spawn_planet(
-    commands: &mut Commands,
-    planet_id: PlanetId,
-    position: Vec3,
-    rotation: Quat,
-    radius: f32,
+pub fn spawn_client_planet<'w, 's, 'a>(
+    commands: &'a mut Commands<'w, 's>,
+    info: SpawnPlanet,
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
-) -> Entity {
-    info!("Planet spawned: {:?}", planet_id);
-
-    commands
-        .spawn_bundle(PlanetBundle {
-            player: Planet { planet_id },
-            mesh: meshes.add(
-                UVSphere {
-                    radius,
-                    sectors: 30,
-                    stacks: 30,
-                }
-                .into(),
-            ),
-            material: materials.add(Color::DARK_GRAY.into()),
-            transform: Transform::from_translation(position).with_rotation(rotation),
-            global_transform: GlobalTransform::default(),
-            transform_velocity: SyncTransform::default(),
-            visibility: Default::default(),
-            computed_visibility: Default::default(),
-        })
-        .id()
+) -> EntityCommands<'w, 's, 'a> {
+    let mut ec = spawn_planet(
+        commands,
+        info.planet_id,
+        info.mass,
+        info.radius,
+        info.translation.into(),
+        Quat::from_array(info.rotation),
+    );
+    ec.insert(
+        meshes.add(
+            UVSphere {
+                radius: info.radius,
+                sectors: 30,
+                stacks: 30,
+            }
+            .into(),
+        ),
+    )
+    .insert(materials.add(Color::DARK_GRAY.into()))
+    .insert_bundle(VisibilityBundle::default())
+    .insert(SyncTransform::default());
+    ec
 }

@@ -1,6 +1,8 @@
 use crate::physics::{get_bevy_vec, get_rapier_vec};
 use bevy::prelude::{Component, Entity, Quat, Query, Res, ResMut, Time, Transform, Vec3};
-use bevy_rapier3d::prelude::{ExternalForce, QueryFilter, RapierContext, RapierRigidBodyHandle};
+use bevy_rapier3d::prelude::{
+    ExternalForce, InteractionGroups, QueryFilter, RapierContext, RapierRigidBodyHandle,
+};
 
 /// Needs RigidBody and GravityReceiver components to work.
 #[derive(Component, Debug, Clone)]
@@ -69,7 +71,10 @@ pub fn levitation_system(
                 ray_direction,
                 levitation.height_above_ground * 1.5,
                 true,
-                QueryFilter::new().exclude_collider(entity),
+                // todo: remove interaction groups
+                QueryFilter::new()
+                    .exclude_collider(entity)
+                    .groups(InteractionGroups::new(!0, !3)),
             ) {
                 let linear_velocity = get_bevy_vec(rigid_body.linvel()).dot(ray_direction);
 

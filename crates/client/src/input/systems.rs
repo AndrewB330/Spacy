@@ -2,17 +2,25 @@ use std::f32::consts::PI;
 
 use bevy::input::mouse::MouseMotion;
 use bevy::prelude::*;
+use common::message::player::PlayerAction;
 
 use common::message::UserMessageData;
-use common::player::{PlayerAction, PlayerHead};
+use common::planet::ParentPlanet;
+use common::player::{Player, PlayerController, PlayerHead};
 
 use crate::input::InputState;
-use crate::player::Player;
+use crate::player::ClientPlayer;
 use crate::server_connection::UserMessages;
 
 pub fn process_player_input(
-    players: Query<&Player>,
-    mut player_heads: Query<(&PlayerHead, &mut Transform)>,
+    mut players: Query<(
+        &Player,
+        &Transform,
+        Option<&ParentPlanet>,
+        &ClientPlayer,
+        Option<&mut PlayerController>,
+    )>,
+    mut player_heads: Query<(&PlayerHead, &mut Transform), Without<Player>>,
     keys: Res<Input<KeyCode>>,
     mouse_keys: Res<Input<MouseButton>>,
     mut mouse: EventReader<MouseMotion>,
@@ -56,12 +64,6 @@ pub fn process_player_input(
             .into(),
         );
 
-        if keys.just_pressed(KeyCode::Space) {
-            server_messages.send(UserMessageData::PlayerAction(PlayerAction::JumpPressed).into());
-        } else if keys.just_released(KeyCode::Space) {
-            server_messages.send(UserMessageData::PlayerAction(PlayerAction::JumpReleased).into());
-        }
-
         let mut direction = Vec3::ZERO;
 
         if keys.pressed(KeyCode::W) {
@@ -77,27 +79,54 @@ pub fn process_player_input(
             direction += Vec3::X;
         }
 
-        if (direction - input_state.direction).length() < 0.01 && direction.length() < 0.01 {
-            input_state.direction_time += time.delta_seconds();
-        } else {
-            input_state.direction = direction;
-            input_state.direction_time = 0.0;
-        }
-
-        if input_state.direction_time < 1.0 {
-            server_messages.send(
-                UserMessageData::PlayerAction(PlayerAction::Move(input_state.direction.to_array()))
-                    .into(),
-            );
-        }
-
-        // Set my camera rotation, all the server head rotation will be ignored for me.
-        for player in players.iter() {
-            if !player.is_me {
+        for (player, transform, maybe_parent_planet, client_player, mut maybe_player_controller) in
+            players.iter_mut()
+        {
+            if !client_player.is_me {
                 continue;
             }
 
-            for (player_head, mut transform) in player_heads.iter_mut() {
+            if let Some(mut player_controller) = maybe_player_controller {
+                let mut send_move = false;
+                if (direction - input_state.direction).length() < 0.01
+                    && input_state.direction_time < 0.5
+                {
+                    input_state.direction_time += time.delta_seconds();
+                } else {
+                    input_state.direction = direction;
+                    input_state.direction_time = 0.0;
+                    send_move = true;
+                }
+
+                if keys.just_pressed(KeyCode::Space) {
+                    player_controller.jump_pressed = true;
+                    server_messages
+                        .send(UserMessageData::PlayerAction(PlayerAction::JumpPressed).into());
+                    send_move = true;
+                } else if keys.just_released(KeyCode::Space) {
+                    player_controller.jump_pressed = false;
+                    server_messages
+                        .send(UserMessageData::PlayerAction(PlayerAction::JumpReleased).into());
+                    send_move = true;
+                }
+                if send_move {
+                    server_messages.send(
+                        UserMessageData::PlayerAction(PlayerAction::Move(
+                            maybe_parent_planet.map(|v| v.parent_planet_id),
+                            transform.translation.to_array(),
+                            input_state.direction.to_array(),
+                        ))
+                        .into(),
+                    );
+                }
+
+                player_controller.head_yaw = input_state.yaw;
+                player_controller.head_pitch = input_state.pitch;
+                player_controller.move_direction = direction;
+            }
+
+            // Set head rotation
+            if let Ok((player_head, mut transform)) = player_heads.get_mut(player.head_entity) {
                 if player_head.player_id != player.player_id {
                     continue;
                 }

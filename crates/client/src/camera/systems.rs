@@ -1,25 +1,25 @@
-use crate::player::Player;
+use crate::player::ClientPlayer;
 use bevy::prelude::*;
-use common::player::PlayerHead;
+use common::player::{Player, PlayerHead};
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 7.0),
+        transform: Transform::from_xyz(0.0, 0.0, 10.0),
         ..default()
     });
 }
 
 pub fn attach_camera_to_me(
     mut commands: Commands,
-    players: Query<(Entity, &Player)>,
+    players: Query<(Entity, &ClientPlayer)>,
     player_heads: Query<(Entity, &Parent), With<PlayerHead>>,
     cameras: Query<(Entity, Option<&Parent>), With<Camera3d>>,
 ) {
     let mut my_head = None;
 
     for (entity, parent) in player_heads.iter() {
-        if let Ok((_, player)) = players.get(parent.get()) {
-            if player.is_me {
+        if let Ok((_, client_player)) = players.get(parent.get()) {
+            if client_player.is_me {
                 my_head = Some(entity);
             }
         }

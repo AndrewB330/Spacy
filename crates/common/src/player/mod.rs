@@ -3,16 +3,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use bevy::prelude::Component;
 use bincode::{Decode, Encode};
 
-pub use message::*;
-
 mod components;
-mod message;
 
-pub use components::{PlayerHead, PlayerHeadBundle};
-
-pub const PLAYER_CAPSULE_HEIGHT: f32 = 0.5;
-pub const PLAYER_CAPSULE_RADIUS: f32 = 0.4;
-pub const PLAYER_ABOVE_GROUND: f32 = 0.2;
+pub use components::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Component, Decode, Encode)]
 pub struct PlayerId(u32);

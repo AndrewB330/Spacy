@@ -1,18 +1,7 @@
-use crate::Transform;
 use bevy::prelude::*;
+use bevy::utils::HashSet;
 
-pub trait TransformWrapper {
-    fn get_translation(&self) -> Vec3;
-
-    fn get_rotation(&self) -> Quat;
-}
-
-impl TransformWrapper for Transform {
-    fn get_translation(&self) -> Vec3 {
-        self.translation
-    }
-
-    fn get_rotation(&self) -> Quat {
-        self.rotation
-    }
+#[derive(Component, Default)]
+pub struct SyncSpawn {
+    pub spawn_sent: HashSet<u32>,
 }

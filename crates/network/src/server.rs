@@ -48,9 +48,8 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
 
                             let connection_sender_clone = connection_sender.clone();
                             tokio::spawn(async move {
-                                if let Err((e, _, _)) =
-                                    stream_data(stream, in_sender, out_receiver).await
-                                {
+                                let (e, _, _) =
+                                    stream_data(stream, in_sender, out_receiver).await;
                                     info!("Disconnected: {}, error: {}", address, e);
                                     match connection_sender_clone
                                         .send(ConnectionEvent::Disconnected(connection_id))
@@ -61,7 +60,6 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                                             return;
                                         }
                                     }
-                                }
                             });
                         }
                         Err(e) => {

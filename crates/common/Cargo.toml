@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.8.1", default-features = false, features = []  }
+bevy_rapier3d = "0.16.2"
 bincode = "2.0.0-rc.1"
 chrono = "0.4.22"

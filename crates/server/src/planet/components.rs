@@ -1,64 +1,25 @@
-use crate::sync::TransformWrapper;
+use crate::sync::SyncSpawn;
+use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
-use common::planet::PlanetId;
-use common::sync::{SyncTarget, SyncTargetId};
+use common::planet::{spawn_planet, PlanetBundle, PlanetId};
 
-#[derive(Bundle)]
-pub struct PlanetBundle {
-    pub planet: Planet,
-    pub collider: Collider,
-    pub rigid_body: RigidBody,
-    pub transform: Transform,
-    pub planet_transform: PlanetTransform,
-    pub global_transform: GlobalTransform,
-}
+pub fn spawn_server_planet<'w, 's, 'a>(
+    commands: &'a mut Commands<'w, 's>,
+    mass: f32,
+    radius: f32,
+    translation: Vec3,
+    rotation: Quat,
+) -> EntityCommands<'w, 's, 'a> {
+    let mut ec = spawn_planet(
+        commands,
+        PlanetId::new(),
+        mass,
+        radius,
+        translation,
+        rotation,
+    );
 
-#[derive(Component)]
-pub struct Planet {
-    pub planet_id: PlanetId,
+    ec.insert(SyncSpawn::default());
 
-    pub radius: f32,
-    pub mass: f32,
-}
-
-/// Deferred planet transform, it only appears on the client.
-/// On the server all planets are fixed and do not move.
-#[derive(Component, Default)]
-pub struct PlanetTransform {
-    pub translation: Vec3,
-    pub rotation: Quat,
-}
-
-impl TransformWrapper for PlanetTransform {
-    fn get_translation(&self) -> Vec3 {
-        self.translation
-    }
-
-    fn get_rotation(&self) -> Quat {
-        self.rotation
-    }
-}
-
-impl SyncTarget for Planet {
-    fn get_id(&self) -> SyncTargetId {
-        SyncTargetId::Planet(self.planet_id)
-    }
-}
-
-pub fn spawn_planet(commands: &mut Commands, radius: f32, mass: f32) -> Entity {
-    commands
-        .spawn_bundle(PlanetBundle {
-            planet: Planet {
-                planet_id: PlanetId::new(),
-                radius,
-                mass,
-            },
-            rigid_body: RigidBody::Fixed,
-            collider: Collider::ball(radius),
-            transform: Transform::default(),
-            planet_transform: PlanetTransform::default(),
-            global_transform: GlobalTransform::default(),
-        })
-        .id()
+    ec
 }

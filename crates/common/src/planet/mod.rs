@@ -1,6 +1,10 @@
+mod components;
+
 use bevy::prelude::*;
 use bincode::{Decode, Encode};
 use std::sync::atomic::{AtomicU32, Ordering};
+
+pub use components::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy, Component, Decode, Encode)]
 pub struct PlanetId(u32);

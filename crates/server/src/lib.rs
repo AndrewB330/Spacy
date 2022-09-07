@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-mod physics;
 mod planet;
 mod player;
 mod sync;
@@ -9,7 +8,6 @@ use bevy::asset::AssetPlugin;
 use std::sync::mpsc::Receiver;
 use std::sync::Mutex;
 
-use crate::physics::PhysicsPlugin;
 use crate::planet::PlanetPlugin;
 use crate::player::PlayerPlugin;
 use crate::sync::SyncPlugin;
@@ -20,6 +18,7 @@ use bevy::prelude::*;
 use bevy::time::TimePlugin;
 use bevy_rapier3d::prelude::*;
 use common::message::{ServerMessageData, UserMessageData};
+use common::physics::PhysicsPlugin;
 use network::server::ConnectionEvent;
 
 use crate::user_connections::{UserConnectionEvents, UserConnectionsPlugin};
@@ -39,26 +38,6 @@ pub fn start_server_app(
 
     app.add_asset::<Mesh>();
     app.add_asset::<Scene>();
-
-    app.add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
-    app.insert_resource(RapierConfiguration {
-        gravity: Vec3::ZERO,
-        timestep_mode: TimestepMode::Variable {
-            max_dt: 1.0 / 60.0,
-            time_scale: 1.0,
-            substeps: 5,
-        },
-        ..default()
-    });
-
-    #[cfg(feature = "logging")]
-    app.insert_resource(LogSettings {
-        level: Level::INFO,
-        ..default()
-    });
-
-    #[cfg(feature = "logging")]
-    app.add_plugin(LogPlugin);
 
     app.add_plugin(UserConnectionsPlugin);
     app.insert_resource(UserConnectionEvents {

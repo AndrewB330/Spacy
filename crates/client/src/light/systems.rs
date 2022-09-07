@@ -8,6 +8,7 @@ pub fn setup_light(mut commands: Commands) {
             shadows_enabled: true,
             ..default()
         },
+        transform: Transform::from_rotation(Quat::from_axis_angle(Vec3::ONE, 0.7)),
         ..default()
     });
 }

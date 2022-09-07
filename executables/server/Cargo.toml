@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-server = { path = "../../crates/server", features = ["logging"] }
+server = { path = "../../crates/server" }
 common = { path = "../../crates/common" }
 network = { path = "../../crates/network" }
 tokio = { version = "1.21.0", features = ["full"] }

@@ -1,135 +1,75 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
+use crate::player::{spawn_server_user_player, UserPlayer};
+use common::message::player::{PlayerAction, SpawnPlayer};
 use common::message::{ServerMessageData, UserMessageData};
-use common::player::{PlayerAction, PlayerId, PlayerInfo};
+use common::physics::get_bevy_vec;
+use common::physics::levitation::Levitation;
+use common::planet::ParentPlanet;
+use common::player::{spawn_player, Player, PlayerController, PlayerId};
+use common::user::UserId;
 
-use crate::physics::get_bevy_vec;
-use crate::physics::levitation::Levitation;
-use crate::player::components::{spawn_user_player, Player};
 use crate::user_connections::{ServerMessages, UserConnections, UserMessages};
 
-pub fn spawn_players(
+pub fn spawn_user_players(
     mut commands: Commands,
     connections: Res<UserConnections>,
-    players: Query<&Player>,
+    players: Query<&UserPlayer>,
 ) {
     for connection in connections.map.values() {
         let mut already_exists = false;
         for player in players.iter() {
-            if let Some(user_id_cur) = player.user_id {
-                if connection.user_id == user_id_cur {
-                    already_exists = true;
-                    break;
-                }
+            if connection.user_id == player.user_id {
+                already_exists = true;
+                break;
             }
         }
 
         if !already_exists {
-            spawn_user_player(
-                &mut commands,
-                PlayerId::new(),
-                Some(connection.user_id),
-                Vec3::Y * 30.0,
-                Quat::IDENTITY,
-            );
+            spawn_server_user_player(&mut commands, connection.user_id);
         }
     }
 }
 
-pub fn broadcast_player_info(
-    mut players: Query<&mut Player>,
-    connection: Res<UserConnections>,
-    mut server_messages: ServerMessages,
-) {
-    for player in players.iter_mut() {
-        for connection in connection.map.values() {
-            let message = ServerMessageData::PlayerInfo(
-                player.player_id,
-                PlayerInfo {
-                    is_me: Some(connection.user_id) == player.user_id,
-                    is_user: player.user_id.is_some(),
-                },
-            );
-
-            if player.is_changed() {
-                server_messages.send((connection.user_id, message.clone()));
-            }
-        }
-    }
-}
-
-pub fn move_players(
+pub fn process_user_players_actions(
     mut players: Query<(
-        &Player,
-        &RapierRigidBodyHandle,
+        &mut UserPlayer,
+        &mut PlayerController,
         &Transform,
-        &Levitation,
-        &ReadMassProperties,
-        &mut ExternalImpulse,
+        Option<&ParentPlanet>,
     )>,
-    time: Res<Time>,
-    context: Res<RapierContext>,
+    mut user_messages: UserMessages,
 ) {
-    let dt = time.delta_seconds().min(0.03);
-
-    for (player, handle, transform, levitation, mass, mut external_impulse) in players.iter_mut() {
-        if player.user_id.is_none() {
-            continue;
-        }
-        if let Some(rigid_body) = context.bodies.get(handle.0) {
-            let up = transform.rotation * Vec3::Y;
-            let velocity = get_bevy_vec(rigid_body.linvel());
-            let velocity_horizontal = velocity - up.dot(velocity) * up;
-            let velocity_target = transform.rotation
-                * Quat::from_axis_angle(Vec3::Y, player.head_yaw)
-                * player.move_direction
-                * player.max_velocity;
-
-            let velocity_delta = velocity_target - velocity_horizontal;
-
-            if velocity_delta.length() > 1e-6 {
-                let acceleration = if levitation.is_falling() {
-                    player.max_acceleration * 0.05
-                } else {
-                    player.max_acceleration
-                };
-
-                external_impulse.impulse += velocity_delta.normalize()
-                    * (velocity_delta.length().min(acceleration * dt))
-                    * mass.0.mass;
-            }
-
-            if player.jump_pressed && !levitation.is_falling() {
-                let jump_velocity_delta = 6.0 - up.dot(velocity);
-                external_impulse.impulse += up * jump_velocity_delta * mass.0.mass;
-            }
-        }
-    }
-}
-
-pub fn process_player_actions(mut players: Query<&mut Player>, mut user_messages: UserMessages) {
     for (user_id, message) in user_messages.iter() {
         if let UserMessageData::PlayerAction(action) = &message {
-            for mut player in players.iter_mut() {
-                if player.user_id != Some(*user_id) {
+            for (mut user_player, mut player_controller, transform, maybe_parent_planet) in
+                players.iter_mut()
+            {
+                if user_player.user_id != *user_id {
                     continue;
                 }
 
                 match action {
-                    PlayerAction::Move(direction) => {
-                        player.move_direction = Vec3::from_array(*direction);
+                    PlayerAction::Move(parent_planet, position, direction) => {
+                        player_controller.move_direction = Vec3::from(*direction);
+                        player_controller.error =
+                            if maybe_parent_planet.map(|v| v.parent_planet_id) == *parent_planet {
+                                Some(Vec3::from(*position) - transform.translation)
+                            } else {
+                                None
+                            }
                     }
                     PlayerAction::JumpPressed => {
                         // todo: remember jump
-                        player.jump_pressed = true;
+                        player_controller.jump_pressed = true;
                     }
                     PlayerAction::JumpReleased => {
-                        player.jump_pressed = false;
+                        player_controller.jump_pressed = false;
                     }
                     PlayerAction::RotateCamera(pitch, yaw) => {
-                        player.head_pith = *pitch;
-                        player.head_yaw = *yaw;
+                        player_controller.head_pitch = *pitch;
+                        player_controller.head_yaw = *yaw;
                     }
                     // Todo: other actions
                     PlayerAction::UseTool => {}
