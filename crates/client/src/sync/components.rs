@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-
 #[derive(Component, Debug, Default)]
 pub struct SyncTransform {
     pub unsync_translation: Vec3,

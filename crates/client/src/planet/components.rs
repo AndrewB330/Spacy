@@ -4,7 +4,7 @@ use common::message::planet::SpawnPlanet;
 
 use crate::shape::UVSphere;
 use crate::sync::SyncTransform;
-use common::planet::{spawn_planet};
+use common::planet::spawn_planet;
 
 pub fn spawn_client_planet<'w, 's, 'a>(
     commands: &'a mut Commands<'w, 's>,

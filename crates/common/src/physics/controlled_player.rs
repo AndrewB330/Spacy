@@ -1,6 +1,6 @@
 use crate::physics::get_bevy_vec;
 use crate::physics::levitation::Levitation;
-use crate::player::{PlayerController};
+use crate::player::PlayerController;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 

@@ -3,7 +3,6 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-
 #[derive(Bundle)]
 pub struct PlanetBundle {
     pub planet: Planet,

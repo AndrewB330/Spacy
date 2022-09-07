@@ -1,8 +1,7 @@
 use crate::planet::components::spawn_server_planet;
-use crate::player::{spawn_server_empty_player};
+use crate::player::spawn_server_empty_player;
 use crate::{Commands, Quat};
 use bevy::math::Vec3;
-
 
 use rand::random;
 
