@@ -13,10 +13,10 @@ use crate::player::PlayerPlugin;
 use crate::sync::SyncPlugin;
 use bevy::core::CorePlugin;
 use bevy::diagnostic::DiagnosticsPlugin;
-use bevy::log::{Level, LogPlugin, LogSettings};
+
 use bevy::prelude::*;
 use bevy::time::TimePlugin;
-use bevy_rapier3d::prelude::*;
+
 use common::message::{ServerMessageData, UserMessageData};
 use common::physics::PhysicsPlugin;
 use network::server::ConnectionEvent;

@@ -1,6 +1,6 @@
 use crate::player::ClientPlayer;
 use bevy::prelude::*;
-use common::player::{Player, PlayerHead};
+use common::player::{PlayerHead};
 
 pub fn setup_camera(mut commands: Commands) {
     commands.spawn_bundle(Camera3dBundle {

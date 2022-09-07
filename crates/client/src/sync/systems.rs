@@ -65,7 +65,7 @@ pub fn update_transform<T: Component + SyncTarget>(
             let linear_velocity = Vec3::from_array(transform_info.linear_velocity);
             let angular_velocity = Vec3::from_array(transform_info.angular_velocity);
 
-            for (obj, mut transform, mut sync_transform) in query.iter_mut() {
+            for (obj, transform, mut sync_transform) in query.iter_mut() {
                 if obj.get_id() == transform_info.target {
                     sync_transform.unsync_translation = transform.translation;
                     sync_transform.unsync_rotation = transform.rotation;

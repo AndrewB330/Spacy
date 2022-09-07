@@ -1,6 +1,6 @@
 use crate::physics::get_bevy_vec;
 use crate::physics::levitation::Levitation;
-use crate::player::{Player, PlayerController};
+use crate::player::{PlayerController};
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
@@ -26,10 +26,13 @@ pub fn update_controlled_players(
             let velocity = get_bevy_vec(rigid_body.linvel());
             let velocity_horizontal = velocity - up.dot(velocity) * up;
 
-            let mut velocity_target = transform.rotation
-                * Quat::from_axis_angle(Vec3::Y, player_controller.head_yaw)
-                * player_controller.move_direction
-                * player_controller.max_velocity;
+            let mut move_direction =
+                player_controller.move_direction - up.dot(player_controller.move_direction) * up;
+            if move_direction.length() > 1.0 {
+                move_direction /= move_direction.length();
+            }
+
+            let mut velocity_target = move_direction * player_controller.max_velocity;
 
             if let Some(error) = player_controller.error {
                 let error = error - up.dot(error) * up;
@@ -44,7 +47,7 @@ pub fn update_controlled_players(
                     error_len * 2.0 - 0.2 + 0.5
                 };
 
-                velocity_target += error / reach_time;
+                velocity_target += error / reach_time * 2.0;
             }
 
             let velocity_delta = velocity_target - velocity_horizontal;

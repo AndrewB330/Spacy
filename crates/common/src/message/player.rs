@@ -1,6 +1,6 @@
 use crate::planet::PlanetId;
 use crate::player::PlayerId;
-use bevy::prelude::{Quat, Vec3};
+
 use bincode::{Decode, Encode};
 
 #[derive(Debug, Clone, Decode, Encode)]

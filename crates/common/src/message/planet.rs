@@ -1,5 +1,5 @@
 use crate::planet::PlanetId;
-use bevy::prelude::*;
+
 use bincode::{Decode, Encode};
 
 #[derive(Debug, Clone, Decode, Encode)]

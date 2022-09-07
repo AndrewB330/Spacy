@@ -1,7 +1,7 @@
 use crate::sync::SyncSpawn;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
-use common::planet::{spawn_planet, PlanetBundle, PlanetId};
+use common::planet::{spawn_planet, PlanetId};
 
 pub fn spawn_server_planet<'w, 's, 'a>(
     commands: &'a mut Commands<'w, 's>,

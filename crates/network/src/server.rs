@@ -26,13 +26,13 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                 loop {
                     match listener.accept().await {
                         Ok((stream, address)) => {
-                            info!("Connected: {}", address);
-
-                            let (mut in_sender, in_receiver) = sync_channel(512 * 32);
-                            let (out_sender, mut out_receiver) = sync_channel(512 * 32);
+                            let (in_sender, in_receiver) = sync_channel(512 * 32);
+                            let (out_sender, out_receiver) = sync_channel(512 * 32);
 
                             let connection_id = counter;
                             counter += 1;
+
+                            info!("Connected: {} (id: {})", address, connection_id);
 
                             match connection_sender.send(ConnectionEvent::Connected(
                                 connection_id,
@@ -48,18 +48,20 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
 
                             let connection_sender_clone = connection_sender.clone();
                             tokio::spawn(async move {
-                                let (e, _, _) =
-                                    stream_data(stream, in_sender, out_receiver).await;
-                                    info!("Disconnected: {}, error: {}", address, e);
-                                    match connection_sender_clone
-                                        .send(ConnectionEvent::Disconnected(connection_id))
-                                    {
-                                        Ok(()) => {}
-                                        Err(_) => {
-                                            info!("Resilient TCP server stopped. Connection channel was closed, unrecoverable.");
-                                            return;
-                                        }
+                                let (e, _, _) = stream_data(stream, in_sender, out_receiver).await;
+                                info!(
+                                    "Disconnected: {} (id: {}), error: {}",
+                                    address, connection_id, e
+                                );
+                                match connection_sender_clone
+                                    .send(ConnectionEvent::Disconnected(connection_id))
+                                {
+                                    Ok(()) => {}
+                                    Err(_) => {
+                                        info!("Resilient TCP server stopped. Connection channel was closed, unrecoverable.");
+                                        return;
                                     }
+                                }
                             });
                         }
                         Err(e) => {

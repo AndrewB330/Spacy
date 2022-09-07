@@ -10,8 +10,8 @@ use tokio::time::sleep;
 pub async fn resilient_tcp_client<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     host: &str,
     port: &str,
-    mut sender: SyncSender<In>,
-    mut receiver: Receiver<Out>,
+    sender: SyncSender<In>,
+    receiver: Receiver<Out>,
 ) {
     let mut sender_slot = Some(sender);
     let mut receiver_slot = Some(receiver);

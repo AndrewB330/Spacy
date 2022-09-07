@@ -1,16 +1,16 @@
 use bevy::prelude::*;
-use bevy_rapier3d::prelude::*;
+
 
 use crate::player::{spawn_server_user_player, UserPlayer};
-use common::message::player::{PlayerAction, SpawnPlayer};
-use common::message::{ServerMessageData, UserMessageData};
-use common::physics::get_bevy_vec;
-use common::physics::levitation::Levitation;
-use common::planet::ParentPlanet;
-use common::player::{spawn_player, Player, PlayerController, PlayerId};
-use common::user::UserId;
+use common::message::player::{PlayerAction};
+use common::message::{UserMessageData};
 
-use crate::user_connections::{ServerMessages, UserConnections, UserMessages};
+
+use common::planet::ParentPlanet;
+use common::player::{PlayerController};
+
+
+use crate::user_connections::{UserConnections, UserMessages};
 
 pub fn spawn_user_players(
     mut commands: Commands,
@@ -36,14 +36,14 @@ pub fn process_user_players_actions(
     mut players: Query<(
         &mut UserPlayer,
         &mut PlayerController,
-        &Transform,
+        &mut Transform,
         Option<&ParentPlanet>,
     )>,
     mut user_messages: UserMessages,
 ) {
     for (user_id, message) in user_messages.iter() {
         if let UserMessageData::PlayerAction(action) = &message {
-            for (mut user_player, mut player_controller, transform, maybe_parent_planet) in
+            for (user_player, mut player_controller, transform, maybe_parent_planet) in
                 players.iter_mut()
             {
                 if user_player.user_id != *user_id {
@@ -58,7 +58,7 @@ pub fn process_user_players_actions(
                                 Some(Vec3::from(*position) - transform.translation)
                             } else {
                                 None
-                            }
+                            };
                     }
                     PlayerAction::JumpPressed => {
                         // todo: remember jump

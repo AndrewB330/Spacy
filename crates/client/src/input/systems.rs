@@ -79,7 +79,7 @@ pub fn process_player_input(
             direction += Vec3::X;
         }
 
-        for (player, transform, maybe_parent_planet, client_player, mut maybe_player_controller) in
+        for (player, transform, maybe_parent_planet, client_player, maybe_player_controller) in
             players.iter_mut()
         {
             if !client_player.is_me {
@@ -87,9 +87,15 @@ pub fn process_player_input(
             }
 
             if let Some(mut player_controller) = maybe_player_controller {
+                let direction = transform.rotation
+                    * Quat::from_axis_angle(Vec3::Y, input_state.yaw)
+                    * direction;
+
                 let mut send_move = false;
+
                 if (direction - input_state.direction).length() < 0.01
                     && input_state.direction_time < 0.5
+                    || input_state.direction_time < 0.05
                 {
                     input_state.direction_time += time.delta_seconds();
                 } else {
@@ -109,20 +115,21 @@ pub fn process_player_input(
                         .send(UserMessageData::PlayerAction(PlayerAction::JumpReleased).into());
                     send_move = true;
                 }
+
+                player_controller.head_yaw = input_state.yaw;
+                player_controller.head_pitch = input_state.pitch;
+                player_controller.move_direction = input_state.direction;
+
                 if send_move {
                     server_messages.send(
                         UserMessageData::PlayerAction(PlayerAction::Move(
                             maybe_parent_planet.map(|v| v.parent_planet_id),
                             transform.translation.to_array(),
-                            input_state.direction.to_array(),
+                            player_controller.move_direction.to_array(),
                         ))
                         .into(),
                     );
                 }
-
-                player_controller.head_yaw = input_state.yaw;
-                player_controller.head_pitch = input_state.pitch;
-                player_controller.move_direction = direction;
             }
 
             // Set head rotation

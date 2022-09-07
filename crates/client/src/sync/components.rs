@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use common::sync::SyncTargetId;
+
 
 #[derive(Component, Debug, Default)]
 pub struct SyncTransform {

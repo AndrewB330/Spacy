@@ -5,7 +5,7 @@ use common::message::player::SpawnPlayer;
 
 use crate::shape::Capsule;
 use crate::sync::SyncTransform;
-use common::player::{spawn_player, PlayerBundle, PlayerId, SpawnPlayerType};
+use common::player::{spawn_player, SpawnPlayerType};
 
 #[derive(Component)]
 pub struct ClientPlayer {

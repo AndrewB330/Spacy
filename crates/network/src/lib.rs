@@ -14,8 +14,8 @@ const BINCODE_CONFIG: Configuration = standard();
 
 async fn stream_data<In: Decode, Out: Encode>(
     mut stream: TcpStream,
-    mut sender: SyncSender<In>,
-    mut receiver: Receiver<Out>,
+    sender: SyncSender<In>,
+    receiver: Receiver<Out>,
 ) -> (std::io::Error, SyncSender<In>, Receiver<Out>) {
     let mut buffer = [0; 1 << 16];
 

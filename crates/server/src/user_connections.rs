@@ -101,11 +101,9 @@ fn process_user_messages(
                 Ok(message) => {
                     event_writer.send((connection.user_id, message));
                 }
-                Err(TryRecvError::Empty) => {
-                    break;
-                }
                 _ => {
-                    // todo: panic!("Unexpected end of channel!")
+                    // Error is ok here, in case if user just disconnected.
+                    break;
                 }
             }
         }

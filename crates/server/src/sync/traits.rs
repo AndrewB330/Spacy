@@ -2,7 +2,7 @@ use crate::player::UserPlayer;
 use bevy::prelude::*;
 use common::message::planet::SpawnPlanet;
 use common::message::player::SpawnPlayer;
-use common::message::{ServerMessageData, SpawnInfo};
+use common::message::{SpawnInfo};
 use common::planet::{ParentPlanet, Planet, PlanetId};
 use common::player::Player;
 use common::sync::{SyncTarget, SyncTargetId};

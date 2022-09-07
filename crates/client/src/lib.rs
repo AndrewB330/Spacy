@@ -8,8 +8,7 @@ mod player;
 mod sync;
 
 use bevy::log::LogPlugin;
-#[cfg(debug_assertions)]
-use bevy::log::{Level, LogSettings};
+
 use std::sync::mpsc::{Receiver, SyncSender};
 use std::sync::Mutex;
 

@@ -25,7 +25,7 @@ impl Plugin for SyncPlugin {
                 Option<&ParentPlanet>,
             )>,
         );
-        app.add_system_to_stage(CoreStage::PostUpdate, broadcast_spawn::<(&Planet)>);
+        app.add_system_to_stage(CoreStage::PostUpdate, broadcast_spawn::<&Planet>);
 
         // Transform
         app.add_system_to_stage(
