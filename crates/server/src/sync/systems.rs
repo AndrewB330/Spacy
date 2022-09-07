@@ -61,7 +61,7 @@ pub(super) fn broadcast_transform<Q: WorldQuery>(
         });
 
         for connection in connections.map.values() {
-            if random::<u32>() % 10 == 0 {
+            if random::<u32>() % 200 == 0 {
                 // todo:
                 server_messages.send((connection.user_id, message.clone()));
             }

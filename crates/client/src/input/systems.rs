@@ -56,13 +56,13 @@ pub fn process_player_input(
             input_state.pitch = input_state.pitch.clamp(-PI / 2.0, PI / 2.0);
         }
 
-        server_messages.send(
+        /*server_messages.send(
             UserMessageData::PlayerAction(PlayerAction::RotateCamera(
                 input_state.pitch,
                 input_state.yaw,
             ))
             .into(),
-        );
+        );*/
 
         let mut direction = Vec3::ZERO;
 
