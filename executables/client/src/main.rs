@@ -11,7 +11,7 @@ fn main() {
     let (user_sender, user_receiver) = sync_channel(512 * 32);
 
     let tcp_client_thread = thread::spawn(|| {
-        resilient_tcp_client("34.118.6.39", "8000", server_sender, user_receiver);
+        resilient_tcp_client("35.222.247.76", "8000", server_sender, user_receiver);
     });
 
     start_client_app(user_sender, server_receiver);

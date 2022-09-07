@@ -51,47 +51,47 @@ pub fn spawn_client_player<'w, 's, 'a>(
             LOCAL_PLAYER_BIT,
             !(LOCAL_PLAYER_BIT | PLAYER_BIT),
         ));
+        ec
+    } else {
+        let mut ec = spawn_player(
+            commands,
+            info.player_id,
+            info.translation.into(),
+            Quat::from_array(info.rotation),
+            if info.is_me {
+                // todo
+                SpawnPlayerType::Kinematic
+            } else {
+                SpawnPlayerType::Kinematic
+            },
+        );
+
+        ec.insert(
+            meshes.add(
+                Capsule {
+                    radius: 0.4,
+                    depth: 0.5,
+                    ..default()
+                }
+                    .into(),
+            ),
+        )
+            .insert(materials.add(Color::WHITE.into()))
+            .insert(ClientPlayer {
+                is_me: false,
+                is_user: info.is_user,
+            })
+            .insert_bundle(VisibilityBundle::default())
+            .insert(CollisionGroups::new(
+                PLAYER_BIT,
+                !(LOCAL_PLAYER_BIT | PLAYER_BIT),
+            ));
+
+        // todo
+        // if !info.is_me
+        {
+            ec.insert(SyncTransform::default());
+        }
+        ec
     }
-
-    let mut ec = spawn_player(
-        commands,
-        info.player_id,
-        info.translation.into(),
-        Quat::from_array(info.rotation),
-        if info.is_me {
-            // todo
-            SpawnPlayerType::Kinematic
-        } else {
-            SpawnPlayerType::Kinematic
-        },
-    );
-
-    ec.insert(
-        meshes.add(
-            Capsule {
-                radius: 0.4,
-                depth: 0.5,
-                ..default()
-            }
-            .into(),
-        ),
-    )
-    .insert(materials.add(Color::WHITE.into()))
-    .insert(ClientPlayer {
-        is_me: false,
-        is_user: info.is_user,
-    })
-    .insert_bundle(VisibilityBundle::default())
-    .insert(CollisionGroups::new(
-        PLAYER_BIT,
-        !(LOCAL_PLAYER_BIT | PLAYER_BIT),
-    ));
-
-    // todo
-    // if !info.is_me
-    {
-        ec.insert(SyncTransform::default());
-    }
-
-    ec
 }
