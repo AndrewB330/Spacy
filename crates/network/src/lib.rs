@@ -1,12 +1,12 @@
 use bincode::config::{standard, Configuration, Fixint, LittleEndian};
 use bincode::{Decode, Encode};
 use log::warn;
+use std::io::{Read, Write};
+use std::net::TcpStream;
 use std::sync::mpsc::{Receiver, SyncSender, TryRecvError};
+use std::thread;
+use std::thread::sleep;
 use std::time::Duration;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
-use tokio::select;
-use tokio::time::sleep;
 
 pub mod client;
 pub mod server;
@@ -17,51 +17,64 @@ const BINCODE_CONFIG: Configuration<LittleEndian, Fixint> = standard()
 
 const ALIGN: usize = 128;
 
-async fn stream_data<In: Decode, Out: Encode>(
+fn stream_data<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     mut stream: TcpStream,
     sender: SyncSender<In>,
     receiver: Receiver<Out>,
 ) -> (std::io::Error, SyncSender<In>, Receiver<Out>) {
     let mut buffer = [0; 1 << 16];
 
-    loop {
-        select! {
-            _ = sleep(Duration::from_millis(2)) => {
-                loop {
-                    let v = receiver.try_recv();
-                    match v {
-                        Ok(out_message) => {
-                            let mut bytes = bincode::encode_to_vec(out_message, BINCODE_CONFIG).unwrap();
-                            bytes.resize(ALIGN, 0);
-                            //if let Err(e) = stream.write_u32(bytes.len() as u32).await {
-                            //    return (e, sender, receiver);
-                            //}*
-                            if let Err(e) = stream.write(&bytes).await {
-                                return (e, sender, receiver);
-                            }
+    let mut stream_clone = stream.try_clone().unwrap();
+
+    let t1 = thread::spawn(move || {
+        loop {
+            loop {
+                let v = receiver.try_recv();
+                match v {
+                    Ok(out_message) => {
+                        let mut bytes =
+                            bincode::encode_to_vec(out_message, BINCODE_CONFIG).unwrap();
+                        bytes.resize(ALIGN, 0);
+                        //if let Err(e) = stream.write_u32(bytes.len() as u32) {
+                        //    return (e, sender, receiver);
+                        //}*
+                        if let Err(e) = stream.write(&bytes) {
+                            return (e, receiver);
                         }
-                        Err(TryRecvError::Empty) => {
-                            break;
-                        }
-                        Err(TryRecvError::Disconnected) => {
-                            panic!("Unrecoverable error :( Streaming channel was closed");
-                        }
+                    }
+                    Err(TryRecvError::Empty) => {
+                        break;
+                    }
+                    Err(TryRecvError::Disconnected) => {
+                        panic!("Unrecoverable error :( Streaming channel was closed");
                     }
                 }
             }
 
-            in_message_len = stream.read_exact(&mut buffer[0..ALIGN]) => {
-                match bincode::decode_from_slice(&buffer, BINCODE_CONFIG) {
-                    Ok((message, _)) => {
-                        if let Err(_) = sender.send(message) {
-                            panic!("Unrecoverable error :( Streaming channel was closed");
-                        }
-                    }
-                    Err(e) => {
-                        warn!("Corrupted message! Error: {}", e);
+            sleep(Duration::from_millis(2))
+        }
+    });
+
+    let t2 = thread::spawn(move || loop {
+        match stream_clone.read_exact(&mut buffer[0..ALIGN]) {
+            Ok(_) => match bincode::decode_from_slice(&buffer, BINCODE_CONFIG) {
+                Ok((message, _)) => {
+                    if let Err(_) = sender.send(message) {
+                        panic!("Unrecoverable error :( Streaming channel was closed");
                     }
                 }
+                Err(e) => {
+                    warn!("Corrupted message! Error: {}", e);
+                }
+            },
+            Err(e) => {
+                return (e, sender);
             }
         }
-    }
+    });
+
+    let (e, r) = t1.join().unwrap();
+    let (e, s) = t2.join().unwrap();
+
+    (e, s, r)
 }

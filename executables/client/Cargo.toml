@@ -9,5 +9,4 @@ edition = "2021"
 client = { path = "../../crates/client" }
 common = { path = "../../crates/common" }
 network = { path = "../../crates/network" }
-tokio = { version = "1.21.0", features = ["full"] }
 lru = "0.7.8"

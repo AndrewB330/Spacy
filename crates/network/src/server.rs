@@ -1,10 +1,11 @@
 use crate::stream_data;
 use bincode::{Decode, Encode};
 use log::info;
+use std::net::TcpListener;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
+use std::thread;
+use std::thread::sleep;
 use std::time::Duration;
-use tokio::net::TcpListener;
-use tokio::time::sleep;
 
 #[derive(Debug)]
 pub enum ConnectionEvent<In, Out> {
@@ -12,19 +13,18 @@ pub enum ConnectionEvent<In, Out> {
     Disconnected(u32),
 }
 
-#[tokio::main]
-pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
+pub fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Send + 'static>(
     port: &str,
     connection_sender: SyncSender<ConnectionEvent<In, Out>>,
 ) {
     let mut counter = 0;
 
     loop {
-        match TcpListener::bind(&format!("0.0.0.0:{}", port)).await {
+        match TcpListener::bind(&format!("0.0.0.0:{}", port)) {
             Ok(listener) => {
                 info!("Resilient TCP server started");
                 loop {
-                    match listener.accept().await {
+                    match listener.accept() {
                         Ok((stream, address)) => {
                             let (in_sender, in_receiver) = sync_channel(512 * 32);
                             let (out_sender, out_receiver) = sync_channel(512 * 32);
@@ -47,8 +47,8 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
                             }
 
                             let connection_sender_clone = connection_sender.clone();
-                            tokio::spawn(async move {
-                                let (e, _, _) = stream_data(stream, in_sender, out_receiver).await;
+                            thread::spawn(move || {
+                                let (e, _, _) = stream_data(stream, in_sender, out_receiver);
                                 info!(
                                     "Disconnected: {} (id: {}), error: {}",
                                     address, connection_id, e
@@ -77,6 +77,6 @@ pub async fn resilient_tcp_server<In: Decode + Send + 'static, Out: Encode + Sen
         }
 
         info!("Restarting after 5 second...");
-        sleep(Duration::from_secs(5)).await;
+        sleep(Duration::from_secs(5));
     }
 }
