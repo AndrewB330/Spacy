@@ -135,6 +135,11 @@ pub enum SpawnPlayerType {
     Controlled,
 }
 
+pub enum SpawnPlayerColliderType {
+    Standard,
+    Mini
+}
+
 pub fn spawn_player<'w, 's, 'a>(
     commands: &'a mut Commands<'w, 's>,
     player_id: PlayerId,

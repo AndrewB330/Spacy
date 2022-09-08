@@ -1,4 +1,5 @@
 use bevy::ecs::system::EntityCommands;
+use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use common::message::player::SpawnPlayer;
@@ -51,47 +52,52 @@ pub fn spawn_client_player<'w, 's, 'a>(
             LOCAL_PLAYER_BIT,
             !(LOCAL_PLAYER_BIT | PLAYER_BIT),
         ));
-        ec
     } else {
-        let mut ec = spawn_player(
-            commands,
-            info.player_id,
-            info.translation.into(),
-            Quat::from_array(info.rotation),
-            if info.is_me {
-                // todo
-                SpawnPlayerType::Kinematic
-            } else {
-                SpawnPlayerType::Kinematic
-            },
-        );
-
-        ec.insert(
-            meshes.add(
-                Capsule {
-                    radius: 0.4,
-                    depth: 0.5,
-                    ..default()
-                }
-                    .into(),
-            ),
-        )
-            .insert(materials.add(Color::WHITE.into()))
-            .insert(ClientPlayer {
-                is_me: false,
-                is_user: info.is_user,
-            })
-            .insert_bundle(VisibilityBundle::default())
-            .insert(CollisionGroups::new(
-                PLAYER_BIT,
-                !(LOCAL_PLAYER_BIT | PLAYER_BIT),
-            ));
-
-        // todo
-        // if !info.is_me
-        {
-            ec.insert(SyncTransform::default());
-        }
-        ec
     }
+
+
+    let mut ec = spawn_player(
+        commands,
+        info.player_id,
+        info.translation.into(),
+        Quat::from_array(info.rotation),
+        if info.is_me {
+            // todo
+            SpawnPlayerType::Kinematic
+        } else {
+            SpawnPlayerType::Kinematic
+        },
+    );
+
+    ec.insert(
+        meshes.add(
+            Capsule {
+                radius: 0.4,
+                depth: 0.5,
+                ..default()
+            }
+                .into(),
+        ),
+    )
+        .insert(materials.add(if !info.is_me {Color::WHITE} else {Color::rgba(1.0, 1.0, 1.0, 0.1)}.into()))
+        .insert(ClientPlayer {
+            is_me: false,
+            is_user: info.is_user,
+        })
+        .insert_bundle(VisibilityBundle::default())
+        .insert(CollisionGroups::new(
+            PLAYER_BIT,
+            !(LOCAL_PLAYER_BIT | PLAYER_BIT),
+        ));
+
+    if info.is_me {
+        ec.insert(NotShadowCaster);
+    }
+
+    // todo
+    // if !info.is_me
+    {
+        ec.insert(SyncTransform::default());
+    }
+    ec
 }
