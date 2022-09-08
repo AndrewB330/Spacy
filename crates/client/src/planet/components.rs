@@ -2,7 +2,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use common::message::planet::SpawnPlanet;
 
-use crate::shape::UVSphere;
+use crate::shape::{Cube, UVSphere};
 use crate::sync::SyncTransform;
 use common::planet::spawn_planet;
 
@@ -22,12 +22,13 @@ pub fn spawn_client_planet<'w, 's, 'a>(
     );
     ec.insert(
         meshes.add(
-            UVSphere {
+            /*UVSphere {
                 radius: info.radius,
                 sectors: 30,
                 stacks: 30,
             }
-            .into(),
+            .into(),*/
+            Cube::new(info.radius * 2.0).into()
         ),
     )
     .insert(materials.add(Color::DARK_GRAY.into()))

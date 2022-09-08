@@ -1,8 +1,10 @@
 use crate::sync::SyncSpawn;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{Collider, LockedAxes};
+use common::physics::levitation::Levitation;
 
-use common::player::{spawn_player, PlayerId, SpawnPlayerType};
+use common::player::{spawn_player, PlayerId, SpawnPlayerType, PlayerColliderSize};
 use common::user::UserId;
 
 #[derive(Component)]
@@ -20,6 +22,7 @@ pub fn spawn_server_user_player<'w, 's, 'a>(
         Vec3::Z * 30.0,
         Quat::default(),
         SpawnPlayerType::Controlled,
+        PlayerColliderSize::Full,
     );
     ec.insert(UserPlayer { user_id })
         .insert(SyncSpawn::default());
@@ -36,7 +39,11 @@ pub fn spawn_server_empty_player<'w, 's, 'a>(
         position,
         Quat::default(),
         SpawnPlayerType::Dynamic,
+        PlayerColliderSize::Full,
     );
     ec.insert(SyncSpawn::default());
+    ec.remove::<Levitation>();
+    ec.remove::<LockedAxes>();
+    ec.insert(Collider::cuboid(0.5, 0.5, 0.5));
     ec
 }

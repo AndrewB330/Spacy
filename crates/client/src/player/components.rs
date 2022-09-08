@@ -3,10 +3,11 @@ use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use common::message::player::SpawnPlayer;
+use common::physics::collision_groups::FAKE_PLAYER_COLLISION_GROUPS;
 
-use crate::shape::Capsule;
+use crate::shape::{Capsule, Cube};
 use crate::sync::SyncTransform;
-use common::player::{spawn_player, SpawnPlayerType};
+use common::player::{PlayerColliderSize, spawn_player, SpawnPlayerType};
 
 #[derive(Component)]
 pub struct ClientPlayer {
@@ -24,13 +25,18 @@ pub fn spawn_client_player<'w, 's, 'a>(
     const PLAYER_BIT: u32 = 1 << 1;
 
     if info.is_me {
+        // Client-controlled player
+
         let mut ec = spawn_player(
             commands,
             info.player_id,
             info.translation.into(),
             Quat::from_array(info.rotation),
             SpawnPlayerType::Controlled,
+            PlayerColliderSize::Mini,
         );
+
+        ec.insert(FAKE_PLAYER_COLLISION_GROUPS);
 
         ec.insert(
             meshes.add(
@@ -47,12 +53,7 @@ pub fn spawn_client_player<'w, 's, 'a>(
             is_me: true,
             is_user: info.is_user,
         })
-        .insert_bundle(VisibilityBundle::default())
-        .insert(CollisionGroups::new(
-            LOCAL_PLAYER_BIT,
-            !(LOCAL_PLAYER_BIT | PLAYER_BIT),
-        ));
-    } else {
+        .insert_bundle(VisibilityBundle::default());
     }
 
 
@@ -62,11 +63,11 @@ pub fn spawn_client_player<'w, 's, 'a>(
         info.translation.into(),
         Quat::from_array(info.rotation),
         if info.is_me {
-            // todo
-            SpawnPlayerType::Kinematic
+            SpawnPlayerType::FakeKinematic
         } else {
             SpawnPlayerType::Kinematic
         },
+        PlayerColliderSize::Full,
     );
 
     ec.insert(
@@ -79,19 +80,20 @@ pub fn spawn_client_player<'w, 's, 'a>(
                 .into(),
         ),
     )
-        .insert(materials.add(if !info.is_me {Color::WHITE} else {Color::rgba(1.0, 1.0, 1.0, 0.1)}.into()))
+        .insert(materials.add(if !info.is_me {Color::WHITE} else {Color::rgba(1.0, 1.0, 1.0, 0.2)}.into()))
         .insert(ClientPlayer {
             is_me: false,
             is_user: info.is_user,
         })
-        .insert_bundle(VisibilityBundle::default())
-        .insert(CollisionGroups::new(
-            PLAYER_BIT,
-            !(LOCAL_PLAYER_BIT | PLAYER_BIT),
-        ));
+        .insert_bundle(VisibilityBundle::default());
 
     if info.is_me {
         ec.insert(NotShadowCaster);
+    } else {
+        if !info.is_user {
+            ec.insert(meshes.add(Cube::new(1.0).into()));
+            ec.insert(Collider::cuboid(0.5, 0.5, 0.5));
+        }
     }
 
     // todo

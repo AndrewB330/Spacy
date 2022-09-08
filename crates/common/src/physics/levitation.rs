@@ -3,6 +3,7 @@ use bevy::prelude::{Component, Entity, Quat, Query, Res, ResMut, Time, Transform
 use bevy_rapier3d::prelude::{
     ExternalForce, InteractionGroups, QueryFilter, RapierContext, RapierRigidBodyHandle,
 };
+use crate::physics::collision_groups::{PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER};
 
 /// Needs RigidBody and GravityReceiver components to work.
 #[derive(Component, Debug, Clone)]
@@ -11,6 +12,7 @@ pub struct Levitation {
     pub force: f32,
     pub damping: f32,
     pub preserve_orientation: bool,
+    pub interaction_groups: InteractionGroups,
     falling: bool,
 }
 
@@ -25,6 +27,11 @@ impl Levitation {
             ..Self::default()
         }
     }
+
+    pub fn with_interaction_groups(mut self, ig: InteractionGroups) -> Self {
+        self.interaction_groups = ig;
+        self
+    }
 }
 
 impl Default for Levitation {
@@ -34,6 +41,7 @@ impl Default for Levitation {
             force: 160.0,
             damping: 20.0,
             preserve_orientation: true,
+            interaction_groups: InteractionGroups::default(),
             falling: false,
         }
     }
@@ -44,7 +52,7 @@ pub fn levitation_system(
     mut entities: Query<(
         Entity,
         &RapierRigidBodyHandle,
-        &Transform,
+        &mut Transform,
         &mut Levitation,
         &ExternalForce,
     )>,
@@ -52,7 +60,7 @@ pub fn levitation_system(
 ) {
     let dt = time.delta_seconds().min(0.03);
 
-    for (entity, handle, transform, mut levitation, gravity_receiver) in entities.iter_mut() {
+    for (entity, handle, mut transform, mut levitation, gravity_receiver) in entities.iter_mut() {
         let mut ray_direction = gravity_receiver.force;
         if ray_direction.length() < 1e-8 {
             ray_direction = transform.rotation * Vec3::NEG_Y;
@@ -71,10 +79,9 @@ pub fn levitation_system(
                 ray_direction,
                 levitation.height_above_ground * 1.5,
                 true,
-                // todo: remove interaction groups
                 QueryFilter::new()
                     .exclude_collider(entity)
-                    .groups(InteractionGroups::new(!0, !3)),
+                    .groups(levitation.interaction_groups),
             ) {
                 let linear_velocity = get_bevy_vec(rigid_body.linvel()).dot(ray_direction);
 
@@ -95,14 +102,15 @@ pub fn levitation_system(
             }
 
             if levitation.preserve_orientation {
-                let delta_rotation =
+                /*let delta_rotation =
                     Quat::from_rotation_arc(transform.rotation * Vec3::NEG_Y, ray_direction);
                 let (axis, angle) = delta_rotation.to_axis_angle();
                 let angular_velocity = get_bevy_vec(&rigid_body.angvel());
 
                 // Todo: account for rotational mass?
                 torque += axis * angle * levitation.force * 0.1 * dt;
-                torque -= angular_velocity * levitation.damping * 0.1 * dt;
+                torque -= angular_velocity * levitation.damping * 0.1 * dt;*/
+                transform.rotation = Quat::from_rotation_arc(transform.rotation * Vec3::NEG_Y, ray_direction) *  transform.rotation;
             }
         }
 
