@@ -47,7 +47,8 @@ impl PlanetBundle {
                 real_rotation: rotation,
             },
             rigid_body: RigidBody::Fixed,
-            collider: Collider::cuboid(radius, radius, radius),
+            //collider: Collider::cuboid(radius, radius, radius),
+            collider: Collider::ball(radius),
             transform: Transform::from_translation(translation).with_rotation(rotation),
             global_transform: GlobalTransform::default(),
         }

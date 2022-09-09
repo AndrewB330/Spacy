@@ -5,9 +5,9 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::rapier::prelude::Vector;
 
+pub mod collision_groups;
 mod controlled_player;
 mod gravity;
-pub mod collision_groups;
 pub mod levitation;
 
 pub struct PhysicsPlugin;

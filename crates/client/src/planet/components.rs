@@ -22,13 +22,13 @@ pub fn spawn_client_planet<'w, 's, 'a>(
     );
     ec.insert(
         meshes.add(
-            /*UVSphere {
+            UVSphere {
                 radius: info.radius,
                 sectors: 30,
                 stacks: 30,
             }
-            .into(),*/
-            Cube::new(info.radius * 2.0).into()
+            .into(),
+            //Cube::new(info.radius * 2.0).into(),
         ),
     )
     .insert(materials.add(Color::DARK_GRAY.into()))

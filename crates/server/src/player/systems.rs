@@ -57,12 +57,9 @@ pub fn process_user_players_actions(
                                 None
                             };
                     }
-                    PlayerAction::JumpPressed => {
+                    PlayerAction::Jump => {
                         // todo: remember jump
-                        player_controller.jump_pressed = true;
-                    }
-                    PlayerAction::JumpReleased => {
-                        player_controller.jump_pressed = false;
+                        player_controller.prepare_to_jump();
                     }
                     PlayerAction::RotateCamera(pitch, yaw) => {
                         player_controller.head_pitch = *pitch;

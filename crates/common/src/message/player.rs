@@ -7,8 +7,7 @@ use bincode::{Decode, Encode};
 pub enum PlayerAction {
     Move(Option<PlanetId>, [f32; 3], [f32; 3]),
     RotateCamera(f32, f32),
-    JumpPressed,
-    JumpReleased,
+    Jump,
     UseTool,
     UseToolSpecial,
 }

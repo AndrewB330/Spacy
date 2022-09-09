@@ -1,9 +1,9 @@
+use crate::physics::collision_groups::{PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER};
 use crate::physics::{get_bevy_vec, get_rapier_vec};
 use bevy::prelude::{Component, Entity, Quat, Query, Res, ResMut, Time, Transform, Vec3};
 use bevy_rapier3d::prelude::{
     ExternalForce, InteractionGroups, QueryFilter, RapierContext, RapierRigidBodyHandle,
 };
-use crate::physics::collision_groups::{PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER};
 
 /// Needs RigidBody and GravityReceiver components to work.
 #[derive(Component, Debug, Clone)]
@@ -86,14 +86,14 @@ pub fn levitation_system(
                 let linear_velocity = get_bevy_vec(rigid_body.linvel()).dot(ray_direction);
 
                 if hit_dist < levitation.height_above_ground {
-                    let difference = hit_dist - levitation.height_above_ground;
+                    /*let difference = hit_dist - levitation.height_above_ground;
                     impulse +=
                         ray_direction * difference * levitation.force * rigid_body.mass() * dt;
                     impulse -= ray_direction
                         * linear_velocity
                         * levitation.damping
                         * rigid_body.mass()
-                        * dt;
+                        * dt;*/
                 }
 
                 if hit_dist < levitation.height_above_ground * 1.01 {
@@ -110,7 +110,9 @@ pub fn levitation_system(
                 // Todo: account for rotational mass?
                 torque += axis * angle * levitation.force * 0.1 * dt;
                 torque -= angular_velocity * levitation.damping * 0.1 * dt;*/
-                transform.rotation = Quat::from_rotation_arc(transform.rotation * Vec3::NEG_Y, ray_direction) *  transform.rotation;
+                transform.rotation =
+                    Quat::from_rotation_arc(transform.rotation * Vec3::NEG_Y, ray_direction)
+                        * transform.rotation;
             }
         }
 

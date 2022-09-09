@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::{Collider, LockedAxes};
 use common::physics::levitation::Levitation;
 
-use common::player::{spawn_player, PlayerId, SpawnPlayerType, PlayerColliderSize};
+use common::player::{spawn_player, PlayerColliderSize, PlayerId, SpawnPlayerType};
 use common::user::UserId;
 
 #[derive(Component)]

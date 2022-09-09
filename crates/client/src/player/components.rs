@@ -3,11 +3,11 @@ use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use common::message::player::SpawnPlayer;
-use common::physics::collision_groups::FAKE_PLAYER_COLLISION_GROUPS;
+use common::physics::collision_groups::{FAKE_PLAYER_COLLISION_GROUPS, PLAYER_COLLISION_GROUPS};
 
 use crate::shape::{Capsule, Cube};
 use crate::sync::SyncTransform;
-use common::player::{PlayerColliderSize, spawn_player, SpawnPlayerType};
+use common::player::{spawn_player, PlayerColliderSize, SpawnPlayerType};
 
 #[derive(Component)]
 pub struct ClientPlayer {
@@ -33,10 +33,10 @@ pub fn spawn_client_player<'w, 's, 'a>(
             info.translation.into(),
             Quat::from_array(info.rotation),
             SpawnPlayerType::Controlled,
-            PlayerColliderSize::Mini,
+            PlayerColliderSize::Full,
         );
 
-        ec.insert(FAKE_PLAYER_COLLISION_GROUPS);
+        ec.insert(PLAYER_COLLISION_GROUPS);
 
         ec.insert(
             meshes.add(
@@ -55,7 +55,6 @@ pub fn spawn_client_player<'w, 's, 'a>(
         })
         .insert_bundle(VisibilityBundle::default());
     }
-
 
     let mut ec = spawn_player(
         commands,
@@ -77,15 +76,24 @@ pub fn spawn_client_player<'w, 's, 'a>(
                 depth: 0.5,
                 ..default()
             }
-                .into(),
+            .into(),
         ),
     )
-        .insert(materials.add(if !info.is_me {Color::WHITE} else {Color::rgba(1.0, 1.0, 1.0, 0.2)}.into()))
-        .insert(ClientPlayer {
-            is_me: false,
-            is_user: info.is_user,
-        })
-        .insert_bundle(VisibilityBundle::default());
+    .insert(
+        materials.add(
+            if !info.is_me {
+                Color::WHITE
+            } else {
+                Color::rgba(1.0, 1.0, 1.0, 0.2)
+            }
+            .into(),
+        ),
+    )
+    .insert(ClientPlayer {
+        is_me: false,
+        is_user: info.is_user,
+    })
+    .insert_bundle(VisibilityBundle::default());
 
     if info.is_me {
         ec.insert(NotShadowCaster);

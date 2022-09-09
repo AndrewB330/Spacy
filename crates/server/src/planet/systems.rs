@@ -8,7 +8,7 @@ use rand::random;
 pub fn spawn_default_planet(mut commands: Commands) {
     spawn_server_planet(&mut commands, 2000.0, 10.0, Vec3::ZERO, Quat::default());
 
-    for _ in 0..100 {
+    for _ in 0..0 {
         spawn_server_empty_player(
             &mut commands,
             Vec3::new(

@@ -1,6 +1,8 @@
 use std::f32::consts::PI;
+use std::time::Duration;
 
 use bevy::input::mouse::MouseMotion;
+use bevy::math::quat;
 use bevy::prelude::*;
 use common::message::player::PlayerAction;
 
@@ -12,12 +14,71 @@ use crate::input::InputState;
 use crate::player::ClientPlayer;
 use crate::server_connection::UserMessages;
 
-pub fn process_player_input(
-    mut players: Query<(
-        &Player,
+pub fn send_player_actions(
+    query: Query<(
         &Transform,
         Option<&ParentPlanet>,
         &ClientPlayer,
+        Option<&PlayerController>,
+    )>,
+    mut user_messages: UserMessages,
+    mut previous_direction: Local<Vec3>,
+    mut previous_direction_time: Local<Duration>,
+    time: Res<Time>,
+) {
+    for (transform, maybe_parent_planet, client_player, maybe_player_controller) in query.iter() {
+        if !client_player.is_me {
+            continue;
+        }
+
+        if let Some(player_controller) = maybe_player_controller {
+            let mut send_move = false;
+
+            if player_controller.just_jumped {
+                send_move = true;
+                user_messages.send(UserMessageData::PlayerAction(PlayerAction::Jump));
+            }
+
+            let elapsed = time.time_since_startup() - *previous_direction_time;
+
+            if elapsed > Duration::from_millis(200) {
+                send_move = true;
+            }
+
+            if previous_direction.length() > 0.01
+                && player_controller.move_direction.length() > 0.01
+                && previous_direction
+                    .normalize()
+                    .dot(player_controller.move_direction.normalize())
+                    < 0.98
+            {
+                send_move = true;
+            }
+
+            if (previous_direction.length() - player_controller.move_direction.length()).abs()
+                > 0.05
+            {
+                send_move = true;
+            }
+
+            if send_move {
+                user_messages.send(UserMessageData::PlayerAction(PlayerAction::Move(
+                    maybe_parent_planet.map(|v| v.parent_planet_id),
+                    transform.translation.to_array(),
+                    player_controller.move_direction.to_array(),
+                )));
+                *previous_direction = player_controller.move_direction;
+                *previous_direction_time = time.time_since_startup();
+            }
+        }
+    }
+}
+
+pub fn process_player_input(
+    mut players: Query<(
+        &Player,
+        &ClientPlayer,
+        &Transform,
         Option<&mut PlayerController>,
     )>,
     mut player_heads: Query<(&PlayerHead, &mut Transform), Without<Player>>,
@@ -26,8 +87,6 @@ pub fn process_player_input(
     mut mouse: EventReader<MouseMotion>,
     mut windows: ResMut<Windows>,
     mut input_state: ResMut<InputState>,
-    mut server_messages: UserMessages,
-    time: Res<Time>,
 ) {
     if let Some(window) = windows.get_primary_mut() {
         // Check that player input is active.
@@ -56,14 +115,6 @@ pub fn process_player_input(
             input_state.pitch = input_state.pitch.clamp(-PI / 2.0, PI / 2.0);
         }
 
-        /*server_messages.send(
-            UserMessageData::PlayerAction(PlayerAction::RotateCamera(
-                input_state.pitch,
-                input_state.yaw,
-            ))
-            .into(),
-        );*/
-
         let mut direction = Vec3::ZERO;
 
         if keys.pressed(KeyCode::W) {
@@ -79,57 +130,22 @@ pub fn process_player_input(
             direction += Vec3::X;
         }
 
-        for (player, transform, maybe_parent_planet, client_player, maybe_player_controller) in
-            players.iter_mut()
-        {
+        let jump = keys.pressed(KeyCode::Space);
+
+        for (player, client_player, transform, maybe_player_controller) in players.iter_mut() {
             if !client_player.is_me {
                 continue;
             }
 
             if let Some(mut player_controller) = maybe_player_controller {
-                let direction = transform.rotation
-                    * Quat::from_axis_angle(Vec3::Y, input_state.yaw)
-                    * direction;
-
-                let mut send_move = false;
-
-                if (direction - input_state.direction).length() < 0.01
-                    && input_state.direction_time < 0.5
-                    || input_state.direction_time < 0.05
-                {
-                    input_state.direction_time += time.delta_seconds();
-                } else {
-                    input_state.direction = direction;
-                    input_state.direction_time = 0.0;
-                    send_move = true;
+                if jump {
+                    player_controller.prepare_to_jump();
                 }
-
-                if keys.just_pressed(KeyCode::Space) {
-                    player_controller.jump_pressed = true;
-                    server_messages
-                        .send(UserMessageData::PlayerAction(PlayerAction::JumpPressed).into());
-                    send_move = true;
-                } else if keys.just_released(KeyCode::Space) {
-                    player_controller.jump_pressed = false;
-                    server_messages
-                        .send(UserMessageData::PlayerAction(PlayerAction::JumpReleased).into());
-                    send_move = true;
-                }
-
                 player_controller.head_yaw = input_state.yaw;
                 player_controller.head_pitch = input_state.pitch;
-                player_controller.move_direction = input_state.direction;
-
-                if send_move {
-                    server_messages.send(
-                        UserMessageData::PlayerAction(PlayerAction::Move(
-                            maybe_parent_planet.map(|v| v.parent_planet_id),
-                            transform.translation.to_array(),
-                            player_controller.move_direction.to_array(),
-                        ))
-                        .into(),
-                    );
-                }
+                player_controller.move_direction = transform.rotation
+                    * Quat::from_axis_angle(Vec3::Y, input_state.yaw)
+                    * direction.clamp_length(0.0, 1.0);
             }
 
             // Set head rotation

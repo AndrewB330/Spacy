@@ -2,18 +2,18 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::physics::collision_groups::{FAKE_PLAYER_COLLISION_GROUPS, PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER, PLAYER_COLLISION_GROUPS};
+use crate::physics::collision_groups::{
+    FAKE_PLAYER_COLLISION_GROUPS, PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER,
+    PLAYER_COLLISION_GROUPS,
+};
 use crate::physics::levitation::Levitation;
+use crate::player::player_controller::PlayerController;
 use crate::player::PlayerId;
 
 const PLAYER_CAPSULE_HEIGHT: f32 = 0.5;
 const PLAYER_CAPSULE_RADIUS: f32 = 0.4;
 const PLAYER_ABOVE_GROUND: f32 = 0.2;
 const PLAYER_HEAD_HEIGHT: f32 = 0.3;
-
-const PLAYER_DEFAULT_MAX_VELOCITY: f32 = 3.5;
-const PLAYER_TOTAL_MAX_VELOCITY: f32 = 20.0;
-const PLAYER_MAX_ACCELERATION: f32 = 100.0;
 
 #[derive(Bundle)]
 pub struct PlayerHeadBundle {
@@ -58,19 +58,6 @@ pub struct Player {
     pub head_entity: Entity,
 }
 
-#[derive(Component)]
-pub struct PlayerController {
-    pub move_direction: Vec3,
-    /// Error of position on server relative to user, to sync client-server movements.
-    pub error: Option<Vec3>,
-    pub jump_pressed: bool,
-    pub jump_pressed_elapsed_time: f32,
-    pub head_yaw: f32,
-    pub head_pitch: f32,
-    pub max_velocity: f32,
-    pub max_acceleration: f32,
-}
-
 impl PlayerHeadBundle {
     pub fn new(player_id: PlayerId, player_entity: Entity) -> Self {
         PlayerHeadBundle {
@@ -92,10 +79,18 @@ pub enum PlayerColliderSize {
 }
 
 impl PlayerBundle {
-    pub fn new(player_id: PlayerId, head_entity: Entity, collider_type: PlayerColliderSize) -> Self {
+    pub fn new(
+        player_id: PlayerId,
+        head_entity: Entity,
+        collider_type: PlayerColliderSize,
+    ) -> Self {
         let collider = match collider_type {
-            PlayerColliderSize::Full => Collider::capsule_y(PLAYER_CAPSULE_HEIGHT * 0.5, PLAYER_CAPSULE_RADIUS),
-            PlayerColliderSize::Mini => Collider::capsule_y(PLAYER_CAPSULE_HEIGHT * 0.5, PLAYER_CAPSULE_RADIUS * 0.5),
+            PlayerColliderSize::Full => {
+                Collider::capsule_y(PLAYER_CAPSULE_HEIGHT * 0.5, PLAYER_CAPSULE_RADIUS)
+            }
+            PlayerColliderSize::Mini => {
+                Collider::capsule_y(PLAYER_CAPSULE_HEIGHT * 0.5, PLAYER_CAPSULE_RADIUS * 0.5)
+            }
         };
 
         PlayerBundle {
@@ -110,9 +105,9 @@ impl PlayerBundle {
             computed_visibility: Default::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             friction: Friction {
-                coefficient: 0.5,
-                combine_rule: CoefficientCombineRule::Min
-            }
+                coefficient: 0.0,
+                combine_rule: CoefficientCombineRule::Min,
+            },
         }
     }
 
@@ -142,7 +137,9 @@ impl PhysicsBasedPlayerBehaviorBundle {
             external_impulse: ExternalImpulse::default(),
             read_mass: ReadMassProperties::default(),
             scale: ColliderScale::Absolute(Vec3::ONE),
-            levitation: Levitation::above_ground(above_ground).with_interaction_groups(InteractionGroups::new(PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER)),
+            levitation: Levitation::above_ground(above_ground).with_interaction_groups(
+                InteractionGroups::new(PLAYER_COLLISION_BIT, PLAYER_COLLISION_FILTER),
+            ),
         }
     }
 }
@@ -180,17 +177,21 @@ pub fn spawn_player<'w, 's, 'a>(
 
     match spawn_player_type {
         SpawnPlayerType::FakeKinematic => {
-            commands.entity(player_entity).insert_bundle((
-                RigidBody::KinematicPositionBased,
-                ColliderScale::Absolute(Vec3::ONE),
-            ))
+            commands
+                .entity(player_entity)
+                .insert_bundle((
+                    RigidBody::KinematicPositionBased,
+                    ColliderScale::Absolute(Vec3::ONE),
+                ))
                 .insert(FAKE_PLAYER_COLLISION_GROUPS);
         }
         SpawnPlayerType::Kinematic => {
-            commands.entity(player_entity).insert_bundle((
-                RigidBody::KinematicPositionBased,
-                ColliderScale::Absolute(Vec3::ONE),
-            ))
+            commands
+                .entity(player_entity)
+                .insert_bundle((
+                    RigidBody::KinematicPositionBased,
+                    ColliderScale::Absolute(Vec3::ONE),
+                ))
                 .insert(PLAYER_COLLISION_GROUPS);
         }
         SpawnPlayerType::Dynamic => {
@@ -203,16 +204,8 @@ pub fn spawn_player<'w, 's, 'a>(
             commands
                 .entity(player_entity)
                 .insert_bundle(PhysicsBasedPlayerBehaviorBundle::new())
-                .insert(PlayerController {
-                    move_direction: Vec3::ZERO,
-                    error: None,
-                    jump_pressed: false,
-                    jump_pressed_elapsed_time: 0.0,
-                    head_yaw: 0.0,
-                    head_pitch: 0.0,
-                    max_velocity: PLAYER_DEFAULT_MAX_VELOCITY,
-                    max_acceleration: PLAYER_MAX_ACCELERATION,
-                }).insert(PLAYER_COLLISION_GROUPS);
+                .insert(PlayerController::default())
+                .insert(PLAYER_COLLISION_GROUPS);
         }
     }
 
